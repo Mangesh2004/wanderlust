@@ -1,21 +1,56 @@
-import { connection } from "next/server";
-import { unauthorized } from "next/navigation";
-import { createSupabaseServer } from "@/lib/supabase/server";
-import { getCollections } from "./get-collections";
+"use client";
+
+import { useEffect, useState } from "react";
+import { useAuth } from "../components/auth-provider";
 import { CollectionsList } from "./collections-list";
+import { useRouter } from "next/navigation";
 
-export default async function CollectionsPage() {
-  await connection();
-  const supabase = await createSupabaseServer();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+interface CollectionSummary {
+  id: string;
+  title: string | null;
+  vibe: string;
+  departureCity: string;
+  travelDates: string;
+  days: number;
+  budget: string;
+  travelWith: string;
+  interests: string[];
+  destinations: { id: string; index: number; imageUrl: string | null }[];
+  createdAt: string;
+}
 
-  if (!user) {
-    unauthorized();
+export default function CollectionsPage() {
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
+  const [collections, setCollections] = useState<CollectionSummary[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      router.replace("/login");
+      return;
+    }
+
+    fetch("/api/collections?fields=summary")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => {
+        setCollections(data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [user, authLoading, router]);
+
+  if (authLoading || loading) {
+    return (
+      <div className="min-h-screen bg-page-bg flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-2 border-border-default border-t-[#E07A3A] rounded-full animate-spin" />
+          <p className="font-sans text-sm text-text-muted">Loading collections...</p>
+        </div>
+      </div>
+    );
   }
-
-  const collections = await getCollections(user.id);
 
   return (
     <div className="min-h-screen bg-page-bg page-texture px-4 py-12 pt-20">

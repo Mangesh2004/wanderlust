@@ -37,11 +37,16 @@ export function AuthProvider({
   useEffect(() => {
     const supabase = createSupabaseClient();
 
-    // Sync initial state
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
+    // If we already have the user from the server, skip the extra getUser() call
+    // to avoid competing for the auth token lock
+    if (!initialUser) {
+      supabase.auth.getUser().then(({ data }) => {
+        setUser(data.user);
+        setLoading(false);
+      });
+    } else {
       setLoading(false);
-    });
+    }
 
     const {
       data: { subscription },
@@ -51,7 +56,7 @@ export function AuthProvider({
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [initialUser]);
 
   return (
     <AuthContext.Provider value={{ user, loading }}>

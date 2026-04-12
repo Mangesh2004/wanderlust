@@ -8,18 +8,26 @@ export async function GET(
   const { id } = await params;
 
   try {
-    const collection = await prisma.collection.findUnique({
-      where: { id },
-      include: {
-        destinations: {
-          orderBy: { index: "asc" },
-        },
-      },
-    });
+    // Use Supabase PostgREST — HTTP-based, no TCP connection pool needed
+    const supabase = await createSupabaseServer();
 
-    if (!collection) {
+    const { data: collection, error } = await supabase
+      .from("Collection")
+      .select(`
+        id, title, vibe, departureCity, travelDates, days, budget, travelWith, interests, createdAt, updatedAt, profileId,
+        destinations:CollectionDestination(id, collectionId, index, data, imageUrl, createdAt)
+      `)
+      .eq("id", id)
+      .single();
+
+    if (error || !collection) {
       return Response.json({ error: "Not found" }, { status: 404 });
     }
+
+    // Sort destinations by index
+    collection.destinations?.sort(
+      (a: { index: number }, b: { index: number }) => a.index - b.index,
+    );
 
     return Response.json(collection);
   } catch (error) {

@@ -5,7 +5,6 @@ import Link from "next/link";
 interface CollectionDestination {
   id: string;
   index: number;
-  data: unknown;
   imageUrl: string | null;
 }
 
@@ -31,9 +30,7 @@ export function CollectionsList({
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {collections.map((col) => {
-        const names = col.destinations
-          .map((d) => (d.data as { name?: string }).name ?? "Unknown")
-          .join(", ");
+        const displayName = col.title || col.vibe;
         const firstImage = col.destinations.find((d) => d.imageUrl)?.imageUrl;
 
         return (
@@ -47,7 +44,7 @@ export function CollectionsList({
               {firstImage ? (
                 <img
                   src={firstImage}
-                  alt={col.title || names}
+                  alt={displayName}
                   className="w-full h-full object-cover opacity-70 group-hover:opacity-90 transition-opacity"
                 />
               ) : (
@@ -67,7 +64,7 @@ export function CollectionsList({
             {/* Info */}
             <div className="p-4">
               <h3 className="font-display text-lg text-text-primary leading-tight mb-1 truncate">
-                {col.title || names}
+                {displayName}
               </h3>
               <p className="font-sans text-sm text-text-muted truncate mb-2">
                 {col.vibe}

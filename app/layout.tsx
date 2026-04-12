@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { ViewTransition } from "react";
 import {
   Playfair_Display,
   Source_Serif_4,
@@ -61,9 +60,7 @@ export default function RootLayout({
         <AuthShell>
           <ThemeProvider>
             <Navbar />
-            <ViewTransition enter="crossfade" exit="crossfade" default="crossfade">
-              {children}
-            </ViewTransition>
+            {children}
           </ThemeProvider>
         </AuthShell>
       </body>

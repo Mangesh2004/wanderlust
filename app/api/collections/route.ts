@@ -1,4 +1,3 @@
-import { revalidateTag } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { ensureProfile } from "@/lib/supabase/ensure-profile";
 import prisma from "@/lib/db";
@@ -54,8 +53,6 @@ export async function POST(request: Request) {
       include: { destinations: true },
     });
 
-    revalidateTag("collections", "max");
-
     return Response.json(collection, { status: 201 });
   } catch (error) {
     return Response.json(
@@ -80,46 +77,39 @@ export async function GET(request: Request) {
 
   const url = new URL(request.url);
   const limitParam = url.searchParams.get("limit");
-  const take = limitParam ? Math.min(parseInt(limitParam, 10), 50) : undefined;
+  const take = limitParam ? Math.min(parseInt(limitParam, 10), 50) : 50;
   const fields = url.searchParams.get("fields");
 
   try {
     if (fields === "summary") {
-      // Lightweight query: skip the heavy destination `data` JSON blobs
-      const collections = await prisma.collection.findMany({
-        where: { profileId: user.id },
-        orderBy: { createdAt: "desc" },
-        ...(take ? { take } : {}),
-        select: {
-          id: true,
-          title: true,
-          vibe: true,
-          destinations: {
-            orderBy: { index: "asc" },
-            select: {
-              id: true,
-              index: true,
-              imageUrl: true,
-            },
-          },
-        },
-      });
+      // Lightweight: skip the heavy destination `data` JSON column
+      const { data: collections, error } = await supabase
+        .from("Collection")
+        .select(`
+          id, title, vibe, departureCity, travelDates, days, budget, travelWith, interests, createdAt,
+          destinations:CollectionDestination(id, index, imageUrl)
+        `)
+        .eq("profileId", user.id)
+        .order("createdAt", { ascending: false })
+        .limit(take);
 
-      return Response.json(collections);
+      if (error) throw error;
+      return Response.json(collections ?? []);
     }
 
-    const collections = await prisma.collection.findMany({
-      where: { profileId: user.id },
-      orderBy: { createdAt: "desc" },
-      ...(take ? { take } : {}),
-      include: {
-        destinations: {
-          orderBy: { index: "asc" },
-        },
-      },
-    });
+    // Full query — uses Supabase PostgREST (HTTP, no TCP pool)
+    const { data: collections, error } = await supabase
+      .from("Collection")
+      .select(`
+        id, title, vibe, departureCity, travelDates, days, budget, travelWith, interests, createdAt, updatedAt, profileId,
+        destinations:CollectionDestination(id, collectionId, index, data, imageUrl, createdAt)
+      `)
+      .eq("profileId", user.id)
+      .order("createdAt", { ascending: false })
+      .limit(take);
 
-    return Response.json(collections);
+    if (error) throw error;
+    return Response.json(collections ?? []);
   } catch (error) {
     return Response.json(
       {
