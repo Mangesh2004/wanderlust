@@ -251,6 +251,31 @@ body {
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* ── View Transitions ── */
+::view-transition-group(site-header) {
+  animation: none;
+  z-index: 100;
+}
+
+::view-transition-old(.crossfade) {
+  animation: 150ms ease-out both vt-fade reverse;
+}
+::view-transition-new(.crossfade) {
+  animation: 200ms ease-in 100ms both vt-fade;
+}
+
+@keyframes vt-fade {
+  from { filter: blur(3px); opacity: 0; }
+  to { filter: blur(0); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0s !important;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

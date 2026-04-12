@@ -7,6 +7,7 @@ import { TripForm } from "./components/trip-form";
 import { TripLoading, type StreamEvent } from "./components/trip-loading";
 import { useAuth } from "./components/auth-provider";
 import { AuthModal } from "./components/auth-modal";
+import { RecentTrips } from "./components/recent-trips";
 
 export default function Home() {
   const { user } = useAuth();
@@ -157,8 +158,19 @@ export default function Home() {
   }
 
   return (
-    <div>
-      <TripForm onSubmit={handleSubmit} error={error} />
+    <div className="min-h-screen bg-[#0F0E0D] pt-24 pb-12 px-4 md:px-8">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-8 lg:gap-12 items-start">
+        {/* Left: Form */}
+        <div className="w-full max-w-2xl">
+          <TripForm onSubmit={handleSubmit} error={error} />
+        </div>
+
+        {/* Right: Recent trips sidebar (desktop) / below form (mobile) */}
+        <aside className="lg:sticky lg:top-24 lg:min-h-[400px]">
+          <RecentTrips />
+        </aside>
+      </div>
+
       <AuthModal
         open={showAuthModal}
         onClose={() => setShowAuthModal(false)}

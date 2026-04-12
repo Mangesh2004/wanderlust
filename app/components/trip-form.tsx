@@ -59,20 +59,19 @@ export function TripForm({ onSubmit, error }: TripFormProps) {
   const minDate = new Date().toISOString().split("T")[0];
 
   return (
-    <div className="min-h-screen bg-[#0F0E0D] flex items-center justify-center px-4 py-12 pt-16">
-      <div className="w-full max-w-2xl">
-        {/* Header */}
-        <div className="text-center mb-10">
-          <p className="font-sans text-[13px] font-semibold uppercase tracking-[0.3em] text-white/30 mb-4">
-            WANDERLUST
-          </p>
-          <h1 className="font-display text-4xl md:text-5xl text-white leading-tight">
-            Where will your next{" "}
-            <span className="italic text-[#E07A3A]">adventure</span> take you?
-          </h1>
-        </div>
+    <div>
+      {/* Header */}
+      <div className="mb-8">
+        <p className="font-sans text-[13px] font-semibold uppercase tracking-[0.3em] text-white/30 mb-4">
+          WANDERLUST
+        </p>
+        <h1 className="font-display text-3xl md:text-4xl text-white leading-tight">
+          Where will your next{" "}
+          <span className="italic text-[#E07A3A]">adventure</span> take you?
+        </h1>
+      </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-5">
           {/* Vibe */}
           <div>
             <label className="block font-sans text-xs font-semibold uppercase tracking-wider text-white/50 mb-2">
@@ -227,10 +226,9 @@ export function TripForm({ onSubmit, error }: TripFormProps) {
           </button>
         </form>
 
-        <p className="mt-6 text-center font-sans text-xs text-white/30">
-          Powered by AI agents with real-time weather, flights &amp; cultural data
-        </p>
-      </div>
+      <p className="mt-5 text-center font-sans text-xs text-white/30">
+        Powered by AI agents with real-time weather, flights &amp; cultural data
+      </p>
     </div>
   );
 }

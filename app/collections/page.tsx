@@ -1,9 +1,11 @@
+import { connection } from "next/server";
 import { unauthorized } from "next/navigation";
 import { createSupabaseServer } from "@/lib/supabase/server";
-import prisma from "@/lib/db";
+import { getCollections } from "./get-collections";
 import { CollectionsList } from "./collections-list";
 
 export default async function CollectionsPage() {
+  await connection();
   const supabase = await createSupabaseServer();
   const {
     data: { user },
@@ -13,18 +15,10 @@ export default async function CollectionsPage() {
     unauthorized();
   }
 
-  const collections = await prisma.collection.findMany({
-    where: { profileId: user.id },
-    orderBy: { createdAt: "desc" },
-    include: {
-      destinations: {
-        orderBy: { index: "asc" },
-      },
-    },
-  });
+  const collections = await getCollections(user.id);
 
   return (
-    <div className="min-h-screen bg-[#0F0E0D] px-4 py-12 pt-16">
+    <div className="min-h-screen bg-[#0F0E0D] px-4 py-12 pt-20">
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
