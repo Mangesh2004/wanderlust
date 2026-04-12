@@ -12,9 +12,9 @@ export function TripDetail({ destination, imageUrl, onBack }: TripDetailProps) {
   const dest = destination;
 
   return (
-    <div className="min-h-screen bg-zinc-50">
+    <div className="min-h-screen bg-page-bg page-texture">
       {/* Hero */}
-      <div className="relative h-[50vh] min-h-[400px] overflow-hidden bg-zinc-200">
+      <div className="relative h-[50vh] min-h-[400px] overflow-hidden bg-surface-elevated">
         {imageUrl ? (
           <img src={imageUrl} alt={dest.name} className="w-full h-full object-cover" />
         ) : (
@@ -51,7 +51,7 @@ export function TripDetail({ destination, imageUrl, onBack }: TripDetailProps) {
       {/* Content */}
       <div className="max-w-4xl mx-auto px-6 py-10 space-y-10">
         {/* Quick facts */}
-        <div className="flex flex-wrap gap-6 justify-center py-4 border-b border-zinc-200">
+        <div className="flex flex-wrap gap-6 justify-center py-4 border-b border-border-default">
           <Fact label="Weather" value={dest.weather.summary} />
           <Fact label="Budget" value={dest.costEstimate.grandTotal} />
           <Fact
@@ -67,11 +67,11 @@ export function TripDetail({ destination, imageUrl, onBack }: TripDetailProps) {
 
         {/* Description */}
         <div>
-          <p className="font-serif text-base leading-relaxed text-zinc-700">
+          <p className="font-serif text-base leading-relaxed text-text-secondary">
             {dest.description}
           </p>
           {dest.history && (
-            <p className="font-serif text-sm text-zinc-500 mt-3 italic">{dest.history}</p>
+            <p className="font-serif text-sm text-text-tertiary mt-3 italic">{dest.history}</p>
           )}
         </div>
 
@@ -81,17 +81,17 @@ export function TripDetail({ destination, imageUrl, onBack }: TripDetailProps) {
             {dest.weather.forecast.map((day) => (
               <div
                 key={day.day}
-                className="text-center p-3 rounded-xl bg-white border border-zinc-100"
+                className="text-center p-3 rounded-xl bg-surface-elevated border border-border-default"
               >
-                <p className="font-mono text-xs text-zinc-400 mb-1">
+                <p className="font-mono text-xs text-text-muted mb-1">
                   {formatDate(day.day)}
                 </p>
                 <p className="text-2xl mb-1">{day.icon}</p>
-                <p className="font-sans text-sm font-semibold text-zinc-800">
+                <p className="font-sans text-sm font-semibold text-text-primary">
                   {day.high}°
                 </p>
-                <p className="font-sans text-xs text-zinc-400">{day.low}°</p>
-                <p className="font-sans text-xs text-zinc-500 mt-1">{day.condition}</p>
+                <p className="font-sans text-xs text-text-muted">{day.low}°</p>
+                <p className="font-sans text-xs text-text-tertiary mt-1">{day.condition}</p>
               </div>
             ))}
           </div>
@@ -122,7 +122,7 @@ export function TripDetail({ destination, imageUrl, onBack }: TripDetailProps) {
             />
           </div>
           <div className="mt-4 p-4 rounded-xl bg-[#E07A3A]/5 border border-[#E07A3A]/10 flex items-center justify-between">
-            <span className="font-sans text-sm font-semibold text-zinc-800">
+            <span className="font-sans text-sm font-semibold text-text-primary">
               Grand Total
             </span>
             <div className="text-right">
@@ -130,7 +130,7 @@ export function TripDetail({ destination, imageUrl, onBack }: TripDetailProps) {
                 {dest.costEstimate.grandTotal}
               </span>
               {dest.costEstimate.withinBudget && (
-                <span className="ml-2 inline-block px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-medium">
+                <span className="ml-2 inline-block px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-medium dark:bg-emerald-900/30 dark:text-emerald-400">
                   Within budget
                 </span>
               )}
@@ -147,20 +147,20 @@ export function TripDetail({ destination, imageUrl, onBack }: TripDetailProps) {
                   <span className="font-mono text-xs font-bold text-[#E07A3A] bg-[#E07A3A]/10 px-2 py-1 rounded">
                     DAY {day.day}
                   </span>
-                  <span className="font-sans font-semibold text-zinc-800">
+                  <span className="font-sans font-semibold text-text-primary">
                     {day.title}
                   </span>
                 </div>
-                <div className="space-y-3 ml-2 pl-4 border-l-2 border-zinc-200">
+                <div className="space-y-3 ml-2 pl-4 border-l-2 border-border-default">
                   {day.places.map((place, i) => (
                     <div key={i} className="flex gap-3">
                       <span className="text-lg flex-shrink-0">{place.icon}</span>
                       <div className="flex-1">
                         <div className="flex items-baseline gap-2 flex-wrap">
-                          <span className="font-sans font-medium text-zinc-800">
+                          <span className="font-sans font-medium text-text-primary">
                             {place.name}
                           </span>
-                          <span className="font-mono text-xs text-zinc-400">
+                          <span className="font-mono text-xs text-text-muted">
                             {place.duration}
                           </span>
                           {place.cost &&
@@ -171,7 +171,7 @@ export function TripDetail({ destination, imageUrl, onBack }: TripDetailProps) {
                               </span>
                             )}
                         </div>
-                        <p className="font-sans text-sm text-zinc-500 mt-0.5">
+                        <p className="font-sans text-sm text-text-tertiary mt-0.5">
                           {place.description}
                         </p>
                       </div>
@@ -187,21 +187,21 @@ export function TripDetail({ destination, imageUrl, onBack }: TripDetailProps) {
         <Section label="Recommended Hotels">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {dest.hotels.map((hotel, i) => (
-              <div key={i} className="p-4 rounded-xl bg-white border border-zinc-100">
+              <div key={i} className="p-4 rounded-xl bg-surface-elevated border border-border-default">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-sans font-semibold text-sm text-zinc-800">
+                  <span className="font-sans font-semibold text-sm text-text-primary">
                     {hotel.name}
                   </span>
                   <span className="font-mono text-xs text-[#E07A3A] font-bold">
                     {hotel.rating}
                   </span>
                 </div>
-                <p className="font-sans text-xs text-zinc-500 mb-2">{hotel.location}</p>
+                <p className="font-sans text-xs text-text-tertiary mb-2">{hotel.location}</p>
                 <div className="flex justify-between items-baseline">
-                  <span className="font-sans text-xs text-zinc-400">
+                  <span className="font-sans text-xs text-text-muted">
                     {hotel.pricePerNight}/night
                   </span>
-                  <span className="font-sans text-sm font-semibold text-zinc-700">
+                  <span className="font-sans text-sm font-semibold text-text-secondary">
                     {hotel.totalForStay} total
                   </span>
                 </div>
@@ -217,21 +217,21 @@ export function TripDetail({ destination, imageUrl, onBack }: TripDetailProps) {
               {dest.flights.map((flight, i) => (
                 <div
                   key={i}
-                  className="flex items-center justify-between p-4 rounded-xl bg-white border border-zinc-100"
+                  className="flex items-center justify-between p-4 rounded-xl bg-surface-elevated border border-border-default"
                 >
                   <div>
-                    <span className="font-sans font-medium text-sm text-zinc-800">
+                    <span className="font-sans font-medium text-sm text-text-primary">
                       {flight.airline}
                     </span>
-                    <p className="font-sans text-xs text-zinc-500 mt-0.5">
+                    <p className="font-sans text-xs text-text-tertiary mt-0.5">
                       {flight.route} · {flight.duration}
                     </p>
                   </div>
                   <div className="text-right">
-                    <span className="font-sans font-semibold text-zinc-800">
+                    <span className="font-sans font-semibold text-text-primary">
                       {flight.price}
                     </span>
-                    <p className="font-mono text-xs text-zinc-400">{flight.date}</p>
+                    <p className="font-mono text-xs text-text-muted">{flight.date}</p>
                   </div>
                 </div>
               ))}
@@ -246,13 +246,13 @@ export function TripDetail({ destination, imageUrl, onBack }: TripDetailProps) {
               {dest.transport.map((t, i) => (
                 <div
                   key={i}
-                  className="p-3 rounded-lg bg-white border border-zinc-100 flex items-center gap-3"
+                  className="p-3 rounded-lg bg-surface-elevated border border-border-default flex items-center gap-3"
                 >
-                  <span className="font-sans font-medium text-sm text-zinc-700">
+                  <span className="font-sans font-medium text-sm text-text-secondary">
                     {t.type}
                   </span>
                   <span className="font-mono text-xs text-[#E07A3A]">{t.cost}</span>
-                  <span className="font-sans text-xs text-zinc-400 flex-1 text-right">
+                  <span className="font-sans text-xs text-text-muted flex-1 text-right">
                     {t.notes}
                   </span>
                 </div>
@@ -265,10 +265,10 @@ export function TripDetail({ destination, imageUrl, onBack }: TripDetailProps) {
         <Section label="Culture & Tips">
           {/* Local phrase */}
           <div className="p-5 rounded-xl bg-[#E07A3A]/5 border border-[#E07A3A]/10 mb-6">
-            <p className="font-serif text-xl text-zinc-800 mb-1">
+            <p className="font-serif text-xl text-text-primary mb-1">
               &ldquo;{dest.culture.localPhrase.phrase}&rdquo;
             </p>
-            <p className="font-mono text-xs text-zinc-500">
+            <p className="font-mono text-xs text-text-tertiary">
               {dest.culture.localPhrase.pronunciation} &mdash;{" "}
               {dest.culture.localPhrase.meaning}
             </p>
@@ -276,14 +276,14 @@ export function TripDetail({ destination, imageUrl, onBack }: TripDetailProps) {
 
           {/* Must-try food */}
           <div className="mb-6">
-            <p className="font-sans text-xs uppercase tracking-wider text-zinc-500 mb-3">
+            <p className="font-sans text-xs uppercase tracking-wider text-text-tertiary mb-3">
               Must-Try Food
             </p>
             <div className="flex flex-wrap gap-2">
               {dest.culture.mustTryFood.map((food, i) => (
                 <span
                   key={i}
-                  className="px-3 py-1.5 rounded-full bg-white border border-zinc-200 font-sans text-sm text-zinc-700"
+                  className="px-3 py-1.5 rounded-full bg-surface-elevated border border-border-default font-sans text-sm text-text-secondary"
                 >
                   {food}
                 </span>
@@ -293,14 +293,14 @@ export function TripDetail({ destination, imageUrl, onBack }: TripDetailProps) {
 
           {/* Tips */}
           <div className="mb-6">
-            <p className="font-sans text-xs uppercase tracking-wider text-zinc-500 mb-3">
+            <p className="font-sans text-xs uppercase tracking-wider text-text-tertiary mb-3">
               Traveler Tips
             </p>
             <ul className="space-y-2">
               {dest.culture.tips.map((tip, i) => (
                 <li
                   key={i}
-                  className="flex gap-3 font-sans text-sm text-zinc-600"
+                  className="flex gap-3 font-sans text-sm text-text-secondary"
                 >
                   <span className="font-mono text-xs text-[#E07A3A] mt-0.5 font-bold">
                     {String(i + 1).padStart(2, "0")}
@@ -314,12 +314,12 @@ export function TripDetail({ destination, imageUrl, onBack }: TripDetailProps) {
           {/* Activities */}
           {dest.culture.activities.length > 0 && (
             <div>
-              <p className="font-sans text-xs uppercase tracking-wider text-zinc-500 mb-3">
+              <p className="font-sans text-xs uppercase tracking-wider text-text-tertiary mb-3">
                 Recommended Activities
               </p>
               <ul className="space-y-2">
                 {dest.culture.activities.map((act, i) => (
-                  <li key={i} className="flex gap-2 font-sans text-sm text-zinc-600">
+                  <li key={i} className="flex gap-2 font-sans text-sm text-text-secondary">
                     <span className="text-[#E07A3A]">{"\u2022"}</span>
                     {act}
                   </li>
@@ -335,7 +335,7 @@ export function TripDetail({ destination, imageUrl, onBack }: TripDetailProps) {
             onClick={onBack}
             className="rounded-xl border border-[#E07A3A] px-8 py-3 font-sans text-sm font-medium text-[#E07A3A] hover:bg-[#E07A3A]/5 transition-colors"
           >
-            ← Back to All Destinations
+            &larr; Back to All Destinations
           </button>
         </div>
       </div>
@@ -346,7 +346,7 @@ export function TripDetail({ destination, imageUrl, onBack }: TripDetailProps) {
 function Section({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <h3 className="font-sans text-xs font-semibold uppercase tracking-widest text-zinc-400 mb-4 flex items-center gap-3">
+      <h3 className="font-sans text-xs font-semibold uppercase tracking-widest text-text-muted mb-4 flex items-center gap-3">
         <span className="w-6 h-0.5 bg-[#E07A3A] rounded-full" />
         {label}
       </h3>
@@ -358,22 +358,22 @@ function Section({ label, children }: { label: string; children: React.ReactNode
 function Fact({ label, value }: { label: string; value: string }) {
   return (
     <div className="text-center">
-      <p className="font-sans text-xs uppercase tracking-wider text-zinc-400 mb-0.5">
+      <p className="font-sans text-xs uppercase tracking-wider text-text-muted mb-0.5">
         {label}
       </p>
-      <p className="font-sans text-sm font-medium text-zinc-800">{value}</p>
+      <p className="font-sans text-sm font-medium text-text-primary">{value}</p>
     </div>
   );
 }
 
 function CostRow({ label, total, desc }: { label: string; total: string; desc: string }) {
   return (
-    <div className="p-4 rounded-xl bg-white border border-zinc-100">
+    <div className="p-4 rounded-xl bg-surface-elevated border border-border-default">
       <div className="flex justify-between items-baseline mb-1">
-        <span className="font-sans text-sm font-medium text-zinc-700">{label}</span>
-        <span className="font-sans text-sm font-semibold text-zinc-800">{total}</span>
+        <span className="font-sans text-sm font-medium text-text-secondary">{label}</span>
+        <span className="font-sans text-sm font-semibold text-text-primary">{total}</span>
       </div>
-      <p className="font-sans text-xs text-zinc-400">{desc}</p>
+      <p className="font-sans text-xs text-text-muted">{desc}</p>
     </div>
   );
 }

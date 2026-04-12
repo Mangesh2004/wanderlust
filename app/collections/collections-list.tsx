@@ -40,10 +40,10 @@ export function CollectionsList({
           <Link
             key={col.id}
             href={`/collections/${col.id}`}
-            className="group block rounded-xl border border-white/10 hover:border-white/20 bg-white/5 overflow-hidden transition-all hover:-translate-y-1"
+            className="group block rounded-xl border border-border-default hover:border-border-hover bg-surface-elevated overflow-hidden transition-all hover:-translate-y-1"
           >
             {/* Thumbnail */}
-            <div className="relative aspect-[4/3] bg-[#0F0E0D] overflow-hidden">
+            <div className="relative aspect-[4/3] bg-page-bg overflow-hidden">
               {firstImage ? (
                 <img
                   src={firstImage}
@@ -52,7 +52,7 @@ export function CollectionsList({
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <span className="font-display text-2xl text-white/20">
+                  <span className="font-display text-2xl text-text-faint">
                     {col.destinations.length}
                   </span>
                 </div>
@@ -66,17 +66,17 @@ export function CollectionsList({
 
             {/* Info */}
             <div className="p-4">
-              <h3 className="font-display text-lg text-white leading-tight mb-1 truncate">
+              <h3 className="font-display text-lg text-text-primary leading-tight mb-1 truncate">
                 {col.title || names}
               </h3>
-              <p className="font-sans text-sm text-white/40 truncate mb-2">
+              <p className="font-sans text-sm text-text-muted truncate mb-2">
                 {col.vibe}
               </p>
-              <div className="flex items-center gap-3 font-sans text-xs text-white/30">
+              <div className="flex items-center gap-3 font-sans text-xs text-text-muted">
                 <span>{col.days} days</span>
-                <span>·</span>
+                <span>&middot;</span>
                 <span>{col.departureCity}</span>
-                <span>·</span>
+                <span>&middot;</span>
                 <span>
                   {new Date(col.createdAt).toLocaleDateString("en-US", {
                     month: "short",

@@ -69,10 +69,10 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-md mx-4 bg-zinc-900 border border-white/10 rounded-2xl p-8">
+      <div className="relative w-full max-w-md mx-4 bg-surface-elevated backdrop-blur-xl border border-border-default rounded-2xl p-8">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-white/40 hover:text-white/70 transition-colors"
+          className="absolute top-4 right-4 text-text-muted hover:text-text-secondary transition-colors"
         >
           <svg
             width="20"
@@ -86,18 +86,18 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
           </svg>
         </button>
 
-        <h2 className="font-display text-2xl text-white mb-6">
+        <h2 className="font-display text-2xl text-text-primary mb-6">
           {tab === "signin" ? "Welcome back" : "Create account"}
         </h2>
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-6 bg-white/5 rounded-lg p-1">
+        <div className="flex gap-1 mb-6 bg-surface-subtle rounded-lg p-1">
           <button
             onClick={() => setTab("signin")}
             className={`flex-1 py-2 text-sm font-sans font-medium rounded-md transition-colors ${
               tab === "signin"
                 ? "bg-[#E07A3A] text-white"
-                : "text-white/50 hover:text-white/70"
+                : "text-text-tertiary hover:text-text-secondary"
             }`}
           >
             Sign In
@@ -107,7 +107,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
             className={`flex-1 py-2 text-sm font-sans font-medium rounded-md transition-colors ${
               tab === "signup"
                 ? "bg-[#E07A3A] text-white"
-                : "text-white/50 hover:text-white/70"
+                : "text-text-tertiary hover:text-text-secondary"
             }`}
           >
             Sign Up
@@ -141,14 +141,14 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
         </button>
 
         <div className="flex items-center gap-3 mb-4">
-          <div className="flex-1 h-px bg-white/10" />
-          <span className="font-sans text-xs text-white/30">or</span>
-          <div className="flex-1 h-px bg-white/10" />
+          <div className="flex-1 h-px bg-border-default" />
+          <span className="font-sans text-xs text-text-muted">or</span>
+          <div className="flex-1 h-px bg-border-default" />
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block font-sans text-sm text-white/60 mb-1.5">
+            <label className="block font-sans text-sm text-text-secondary mb-1.5">
               Email
             </label>
             <input
@@ -156,13 +156,13 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 font-sans text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#E07A3A]/50 focus:ring-1 focus:ring-[#E07A3A]/50 transition-colors"
+              className="w-full bg-input-bg border border-input-border rounded-lg px-4 py-2.5 font-sans text-sm text-input-text placeholder-text-muted focus:outline-none focus:border-[#E07A3A]/50 focus:ring-1 focus:ring-[#E07A3A]/50 transition-colors"
               placeholder="you@example.com"
             />
           </div>
 
           <div>
-            <label className="block font-sans text-sm text-white/60 mb-1.5">
+            <label className="block font-sans text-sm text-text-secondary mb-1.5">
               Password
             </label>
             <input
@@ -171,7 +171,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
               minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 font-sans text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#E07A3A]/50 focus:ring-1 focus:ring-[#E07A3A]/50 transition-colors"
+              className="w-full bg-input-bg border border-input-border rounded-lg px-4 py-2.5 font-sans text-sm text-input-text placeholder-text-muted focus:outline-none focus:border-[#E07A3A]/50 focus:ring-1 focus:ring-[#E07A3A]/50 transition-colors"
               placeholder="••••••••"
             />
           </div>

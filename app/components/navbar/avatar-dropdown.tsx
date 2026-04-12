@@ -35,7 +35,7 @@ export function AvatarDropdown() {
     return (
       <Link
         href="/login"
-        className="hidden md:inline-block font-sans text-[11px] font-medium text-white/70 hover:text-white border border-white/15 hover:border-white/30 rounded-full px-3.5 py-1 transition-all duration-200"
+        className="hidden md:inline-block font-sans text-[11px] font-medium text-text-secondary hover:text-text-primary border border-border-default hover:border-border-hover rounded-full px-3.5 py-1 transition-all duration-200"
       >
         Sign In
       </Link>
@@ -76,33 +76,33 @@ export function AvatarDropdown() {
             referrerPolicy="no-referrer"
           />
         ) : (
-          <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-[11px] font-semibold text-white/70">
+          <div className="w-8 h-8 rounded-full bg-surface-elevated flex items-center justify-center text-[11px] font-semibold text-text-secondary">
             {initials}
           </div>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-56 bg-black/70 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl animate-fade-in origin-top-right">
-          <div className="px-4 py-3 border-b border-white/10">
+        <div className="absolute right-0 top-full mt-2 w-56 bg-[var(--dropdown-bg)] backdrop-blur-xl border border-[var(--dropdown-border)] rounded-xl shadow-xl animate-fade-in origin-top-right">
+          <div className="px-4 py-3 border-b border-border-default">
             {fullName && (
-              <p className="font-sans text-sm text-white truncate">{fullName}</p>
+              <p className="font-sans text-sm text-text-primary truncate">{fullName}</p>
             )}
-            <p className="font-sans text-xs text-white/40 truncate">{email}</p>
+            <p className="font-sans text-xs text-text-muted truncate">{email}</p>
           </div>
           <div className="py-1">
             <Link
               href="/collections"
               onClick={() => setOpen(false)}
-              className="block px-4 py-2 font-sans text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+              className="block px-4 py-2 font-sans text-sm text-text-secondary hover:text-text-primary hover:bg-hover-bg transition-colors"
             >
               My Collections
             </Link>
           </div>
-          <div className="border-t border-white/10 py-1">
+          <div className="border-t border-border-default py-1">
             <button
               onClick={handleSignOut}
-              className="w-full text-left px-4 py-2 font-sans text-sm text-white/40 hover:text-white hover:bg-white/5 transition-colors"
+              className="w-full text-left px-4 py-2 font-sans text-sm text-text-muted hover:text-text-primary hover:bg-hover-bg transition-colors"
             >
               Sign Out
             </button>

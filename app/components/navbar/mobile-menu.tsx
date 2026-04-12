@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "../auth-provider";
 import { createSupabaseClient } from "@/lib/supabase/client";
+import { ThemeToggle } from "../theme-toggle";
 
 export function MobileMenu() {
   const { user, loading } = useAuth();
@@ -32,17 +33,17 @@ export function MobileMenu() {
         aria-label={open ? "Close menu" : "Open menu"}
       >
         <span
-          className={`block h-[1.5px] w-full bg-white/70 rounded transition-all duration-300 origin-center ${
+          className={`block h-[1.5px] w-full bg-icon-color rounded transition-all duration-300 origin-center ${
             open ? "translate-y-[7.5px] rotate-45" : ""
           }`}
         />
         <span
-          className={`block h-[1.5px] w-full bg-white/70 rounded transition-all duration-300 ${
+          className={`block h-[1.5px] w-full bg-icon-color rounded transition-all duration-300 ${
             open ? "opacity-0 scale-x-0" : ""
           }`}
         />
         <span
-          className={`block h-[1.5px] w-full bg-white/70 rounded transition-all duration-300 origin-center ${
+          className={`block h-[1.5px] w-full bg-icon-color rounded transition-all duration-300 origin-center ${
             open ? "-translate-y-[7.5px] -rotate-45" : ""
           }`}
         />
@@ -50,7 +51,7 @@ export function MobileMenu() {
 
       {/* Slide-down panel */}
       <div
-        className={`fixed top-16 inset-x-4 bg-black/80 backdrop-blur-xl border border-white/10 rounded-2xl shadow-xl transition-all duration-300 z-50 ${
+        className={`fixed top-16 inset-x-4 bg-[var(--dropdown-bg)] backdrop-blur-xl border border-border-default rounded-2xl shadow-xl transition-all duration-300 z-50 ${
           open
             ? "opacity-100 translate-y-0 pointer-events-auto"
             : "opacity-0 -translate-y-4 pointer-events-none"
@@ -60,7 +61,7 @@ export function MobileMenu() {
           <Link
             href="/"
             onClick={() => setOpen(false)}
-            className="px-3 py-2.5 font-sans text-sm text-white/70 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+            className="px-3 py-2.5 font-sans text-sm text-text-secondary hover:text-text-primary hover:bg-hover-bg rounded-lg transition-colors"
           >
             Home
           </Link>
@@ -68,29 +69,36 @@ export function MobileMenu() {
             <Link
               href="/collections"
               onClick={() => setOpen(false)}
-              className="px-3 py-2.5 font-sans text-sm text-white/70 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+              className="px-3 py-2.5 font-sans text-sm text-text-secondary hover:text-text-primary hover:bg-hover-bg rounded-lg transition-colors"
             >
               Collections
             </Link>
           )}
 
-          <div className="my-2 border-t border-white/10" />
+          <div className="my-2 border-t border-border-default" />
+
+          <div className="flex items-center justify-between px-3 py-2">
+            <span className="font-sans text-xs text-text-muted">Theme</span>
+            <ThemeToggle />
+          </div>
+
+          <div className="my-1 border-t border-border-default" />
 
           {!loading && user ? (
             <>
               <div className="px-3 py-2">
                 {user.user_metadata?.full_name && (
-                  <p className="font-sans text-sm text-white truncate">
+                  <p className="font-sans text-sm text-text-primary truncate">
                     {user.user_metadata.full_name as string}
                   </p>
                 )}
-                <p className="font-sans text-xs text-white/40 truncate">
+                <p className="font-sans text-xs text-text-muted truncate">
                   {user.email}
                 </p>
               </div>
               <button
                 onClick={handleSignOut}
-                className="text-left px-3 py-2.5 font-sans text-sm text-white/40 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+                className="text-left px-3 py-2.5 font-sans text-sm text-text-muted hover:text-text-primary hover:bg-hover-bg rounded-lg transition-colors"
               >
                 Sign Out
               </button>
@@ -99,7 +107,7 @@ export function MobileMenu() {
             <Link
               href="/login"
               onClick={() => setOpen(false)}
-              className="px-3 py-2.5 font-sans text-sm font-medium text-[#E07A3A] hover:text-[#E07A3A]/80 hover:bg-white/5 rounded-lg transition-colors"
+              className="px-3 py-2.5 font-sans text-sm font-medium text-[#E07A3A] hover:text-[#E07A3A]/80 hover:bg-hover-bg rounded-lg transition-colors"
             >
               Sign In
             </Link>

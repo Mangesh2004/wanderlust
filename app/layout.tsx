@@ -8,6 +8,7 @@ import {
 import "./globals.css";
 import { AuthShell } from "./components/auth-shell";
 import { Navbar } from "./components/navbar";
+import { ThemeProvider } from "./components/theme-provider";
 import { cn } from "@/lib/utils";
 
 const playfair = Playfair_Display({
@@ -47,13 +48,23 @@ export default function RootLayout({
     <html
       lang="en"
       className={cn("h-full", "antialiased", playfair.variable, sourceSerif.variable, jetbrainsMono.variable, "font-sans", geist.variable)}
+      suppressHydrationWarning
     >
-      <body className="min-h-full overflow-x-hidden">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('theme');if(t==='dark')document.documentElement.classList.add('dark')}catch(e){}})()`,
+          }}
+        />
+      </head>
+      <body className="min-h-full overflow-x-hidden bg-page-bg transition-colors duration-200">
         <AuthShell>
-          <Navbar />
-          <ViewTransition enter="crossfade" exit="crossfade" default="crossfade">
-            {children}
-          </ViewTransition>
+          <ThemeProvider>
+            <Navbar />
+            <ViewTransition enter="crossfade" exit="crossfade" default="crossfade">
+              {children}
+            </ViewTransition>
+          </ThemeProvider>
         </AuthShell>
       </body>
     </html>

@@ -63,24 +63,24 @@ export function TripLoading({ events }: TripLoadingProps) {
   const progress = Math.min((totalToolResults / 20) * 100, 95);
 
   return (
-    <div className="min-h-screen bg-[#0F0E0D] flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-page-bg page-texture flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-xl">
-        <p className="mb-3 text-center font-sans text-[13px] uppercase tracking-[0.4em] text-[#FAFAF5]/30">
+        <p className="mb-3 text-center font-sans text-[13px] uppercase tracking-[0.4em] text-text-muted">
           WANDERLUST
         </p>
-        <p className="mb-8 text-center font-serif text-lg text-[#FAFAF5]/50 italic">
+        <p className="mb-8 text-center font-serif text-lg text-text-tertiary italic">
           Researching your dream destinations...
         </p>
 
         {/* Activity feed */}
         <div
           ref={scrollRef}
-          className="bg-[#FAFAF5]/[0.03] rounded-xl border border-[#FAFAF5]/[0.06] p-5 max-h-[55vh] overflow-y-auto space-y-2"
+          className="bg-surface-subtle rounded-xl border border-border-default p-5 max-h-[55vh] overflow-y-auto space-y-2"
         >
           {events.length === 0 && (
             <div className="flex items-center gap-3">
               <span className="inline-block w-3 h-3 rounded-full border-2 border-transparent border-t-[var(--accent-orange)] animate-spin" />
-              <span className="font-mono text-sm text-[#FAFAF5]/50">
+              <span className="font-mono text-sm text-text-tertiary">
                 Initializing agent...
               </span>
             </div>
@@ -93,16 +93,16 @@ export function TripLoading({ events }: TripLoadingProps) {
         {/* Progress bar */}
         <div className="mt-6">
           <div className="flex justify-between mb-2">
-            <span className="font-mono text-xs text-[#FAFAF5]/30">
+            <span className="font-mono text-xs text-text-muted">
               {totalToolResults > 0
                 ? `${totalToolResults} tool calls complete`
                 : "Starting research..."}
             </span>
-            <span className="font-mono text-xs text-[#FAFAF5]/30">
+            <span className="font-mono text-xs text-text-muted">
               {Math.round(progress)}%
             </span>
           </div>
-          <div className="h-1 bg-[#FAFAF5]/[0.06] rounded-full overflow-hidden">
+          <div className="h-1 bg-surface-subtle rounded-full overflow-hidden">
             <div
               className="h-full bg-[var(--accent-orange)] rounded-full transition-all duration-700 ease-out"
               style={{ width: `${progress}%` }}
@@ -119,7 +119,7 @@ function EventLine({ event }: { event: StreamEvent }) {
     return (
       <div className="flex items-center gap-3 animate-fade-in">
         <span className="inline-block w-3 h-3 rounded-full border-2 border-transparent border-t-[var(--accent-orange)] animate-spin flex-shrink-0" />
-        <span className="font-mono text-sm text-[#FAFAF5]/70">{event.message}</span>
+        <span className="font-mono text-sm text-text-secondary">{event.message}</span>
       </div>
     );
   }
@@ -130,12 +130,12 @@ function EventLine({ event }: { event: StreamEvent }) {
       : "";
     return (
       <div className="flex items-start gap-2 ml-4 animate-fade-in">
-        <span className="text-[#FAFAF5]/30 font-mono text-xs mt-0.5">{"\u25B8"}</span>
+        <span className="text-text-muted font-mono text-xs mt-0.5">{"\u25B8"}</span>
         <div>
           <span className="font-mono text-xs text-[var(--accent-orange)]">
             {event.tool}
           </span>
-          <span className="font-mono text-xs text-[#FAFAF5]/40 ml-1">
+          <span className="font-mono text-xs text-text-muted ml-1">
             ({inputSummary})
           </span>
         </div>
@@ -150,7 +150,7 @@ function EventLine({ event }: { event: StreamEvent }) {
     return (
       <div className="flex items-start gap-2 ml-8 animate-fade-in">
         <span className="text-emerald-400/60 font-mono text-xs mt-0.5">{"\u2192"}</span>
-        <span className="font-mono text-xs text-[#FAFAF5]/50">{outputSummary}</span>
+        <span className="font-mono text-xs text-text-tertiary">{outputSummary}</span>
       </div>
     );
   }
@@ -158,10 +158,10 @@ function EventLine({ event }: { event: StreamEvent }) {
   if (event.type === "thinking") {
     return (
       <div className="flex items-start gap-2 ml-4 animate-fade-in">
-        <span className="text-[#FAFAF5]/20 font-mono text-xs mt-0.5">
+        <span className="text-text-faint font-mono text-xs mt-0.5">
           {"\u{1F4AD}"}
         </span>
-        <span className="font-mono text-xs text-[#FAFAF5]/30 italic">
+        <span className="font-mono text-xs text-text-muted italic">
           {event.thinking?.slice(0, 120)}
         </span>
       </div>

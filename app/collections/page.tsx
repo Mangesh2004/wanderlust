@@ -18,28 +18,28 @@ export default async function CollectionsPage() {
   const collections = await getCollections(user.id);
 
   return (
-    <div className="min-h-screen bg-[#0F0E0D] px-4 py-12 pt-20">
+    <div className="min-h-screen bg-page-bg page-texture px-4 py-12 pt-20">
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <p className="font-sans text-[13px] font-semibold uppercase tracking-[0.3em] text-white/30 mb-2">
+            <p className="font-sans text-[13px] font-semibold uppercase tracking-[0.3em] text-text-muted mb-2">
               WANDERLUST
             </p>
-            <h1 className="font-display text-3xl md:text-4xl text-white">
+            <h1 className="font-display text-3xl md:text-4xl text-text-primary">
               My <span className="italic text-[#E07A3A]">Collections</span>
             </h1>
           </div>
           <a
             href="/"
-            className="font-sans text-sm text-white/40 hover:text-white/70 border border-white/10 hover:border-white/20 rounded-lg px-4 py-2 transition-colors"
+            className="font-sans text-sm text-text-muted hover:text-text-secondary border border-border-default hover:border-border-hover rounded-lg px-4 py-2 transition-colors"
           >
-            ← New Search
+            &larr; New Search
           </a>
         </div>
 
         {collections.length === 0 ? (
           <div className="text-center py-24">
-            <p className="font-sans text-white/40 mb-4">
+            <p className="font-sans text-text-muted mb-4">
               No saved collections yet.
             </p>
             <a

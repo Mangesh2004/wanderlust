@@ -62,10 +62,10 @@ export function TripForm({ onSubmit, error }: TripFormProps) {
     <div>
       {/* Header */}
       <div className="mb-8">
-        <p className="font-sans text-[13px] font-semibold uppercase tracking-[0.3em] text-white/30 mb-4">
+        <p className="font-sans text-[13px] font-semibold uppercase tracking-[0.3em] text-text-muted mb-4">
           WANDERLUST
         </p>
-        <h1 className="font-display text-3xl md:text-4xl text-white leading-tight">
+        <h1 className="font-display text-3xl md:text-4xl text-text-primary leading-tight">
           Where will your next{" "}
           <span className="italic text-[#E07A3A]">adventure</span> take you?
         </h1>
@@ -74,14 +74,14 @@ export function TripForm({ onSubmit, error }: TripFormProps) {
       <form onSubmit={handleSubmit} className="space-y-5">
           {/* Vibe */}
           <div>
-            <label className="block font-sans text-xs font-semibold uppercase tracking-wider text-white/50 mb-2">
+            <label className="block font-sans text-xs font-semibold uppercase tracking-wider text-text-tertiary mb-2">
               Describe your travel vibe
             </label>
             <textarea
               value={vibe}
               onChange={(e) => setVibe(e.target.value)}
               placeholder="I want snowy mountains, cozy cafes, and hot chocolate by the fireplace..."
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-5 py-4 font-serif text-base text-white placeholder:text-white/30 placeholder:italic focus:border-[#E07A3A]/50 focus:outline-none focus:ring-2 focus:ring-[#E07A3A]/20 resize-none transition-all"
+              className="w-full rounded-xl border border-input-border bg-input-bg px-5 py-4 font-serif text-base text-input-text placeholder:text-text-muted placeholder:italic focus:border-[#E07A3A]/50 focus:outline-none focus:ring-2 focus:ring-[#E07A3A]/20 resize-none transition-all"
               rows={3}
               required
             />
@@ -90,7 +90,7 @@ export function TripForm({ onSubmit, error }: TripFormProps) {
           {/* From + Date + Days */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block font-sans text-xs font-semibold uppercase tracking-wider text-white/50 mb-2">
+              <label className="block font-sans text-xs font-semibold uppercase tracking-wider text-text-tertiary mb-2">
                 Flying from
               </label>
               <input
@@ -98,12 +98,12 @@ export function TripForm({ onSubmit, error }: TripFormProps) {
                 value={departureCity}
                 onChange={(e) => setDepartureCity(e.target.value)}
                 placeholder="Mumbai"
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-sans text-sm text-white placeholder:text-white/30 focus:border-[#E07A3A]/50 focus:outline-none focus:ring-2 focus:ring-[#E07A3A]/20 transition-all"
+                className="w-full rounded-xl border border-input-border bg-input-bg px-4 py-3 font-sans text-sm text-input-text placeholder:text-text-muted focus:border-[#E07A3A]/50 focus:outline-none focus:ring-2 focus:ring-[#E07A3A]/20 transition-all"
                 required
               />
             </div>
             <div>
-              <label className="block font-sans text-xs font-semibold uppercase tracking-wider text-white/50 mb-2">
+              <label className="block font-sans text-xs font-semibold uppercase tracking-wider text-text-tertiary mb-2">
                 Travel date
               </label>
               <input
@@ -111,12 +111,12 @@ export function TripForm({ onSubmit, error }: TripFormProps) {
                 value={travelDates}
                 onChange={(e) => setTravelDates(e.target.value)}
                 min={minDate}
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-sans text-sm text-white focus:border-[#E07A3A]/50 focus:outline-none focus:ring-2 focus:ring-[#E07A3A]/20 transition-all"
+                className="w-full rounded-xl border border-input-border bg-input-bg px-4 py-3 font-sans text-sm text-input-text focus:border-[#E07A3A]/50 focus:outline-none focus:ring-2 focus:ring-[#E07A3A]/20 transition-all"
                 required
               />
             </div>
             <div>
-              <label className="block font-sans text-xs font-semibold uppercase tracking-wider text-white/50 mb-2">
+              <label className="block font-sans text-xs font-semibold uppercase tracking-wider text-text-tertiary mb-2">
                 Days
               </label>
               <input
@@ -127,14 +127,14 @@ export function TripForm({ onSubmit, error }: TripFormProps) {
                 }
                 min={1}
                 max={14}
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-sans text-sm text-white focus:border-[#E07A3A]/50 focus:outline-none focus:ring-2 focus:ring-[#E07A3A]/20 transition-all"
+                className="w-full rounded-xl border border-input-border bg-input-bg px-4 py-3 font-sans text-sm text-input-text focus:border-[#E07A3A]/50 focus:outline-none focus:ring-2 focus:ring-[#E07A3A]/20 transition-all"
               />
             </div>
           </div>
 
           {/* Budget */}
           <div>
-            <label className="block font-sans text-xs font-semibold uppercase tracking-wider text-white/50 mb-3">
+            <label className="block font-sans text-xs font-semibold uppercase tracking-wider text-text-tertiary mb-3">
               Budget
             </label>
             <div className="flex flex-wrap gap-2">
@@ -146,7 +146,7 @@ export function TripForm({ onSubmit, error }: TripFormProps) {
                   className={`rounded-full px-5 py-2.5 font-sans text-sm font-medium transition-all ${
                     budget === opt.value
                       ? "bg-[#E07A3A] text-white shadow-sm"
-                      : "bg-white/5 border border-white/10 text-white/60 hover:border-white/20 hover:text-white"
+                      : "bg-chip-bg border border-chip-border text-chip-text hover:border-border-hover hover:text-text-primary"
                   }`}
                 >
                   {opt.icon} {opt.label}
@@ -157,7 +157,7 @@ export function TripForm({ onSubmit, error }: TripFormProps) {
 
           {/* Traveling with */}
           <div>
-            <label className="block font-sans text-xs font-semibold uppercase tracking-wider text-white/50 mb-3">
+            <label className="block font-sans text-xs font-semibold uppercase tracking-wider text-text-tertiary mb-3">
               Traveling with
             </label>
             <div className="flex flex-wrap gap-2">
@@ -169,7 +169,7 @@ export function TripForm({ onSubmit, error }: TripFormProps) {
                   className={`rounded-full px-5 py-2.5 font-sans text-sm font-medium transition-all ${
                     travelWith === opt.value
                       ? "bg-[#E07A3A] text-white shadow-sm"
-                      : "bg-white/5 border border-white/10 text-white/60 hover:border-white/20 hover:text-white"
+                      : "bg-chip-bg border border-chip-border text-chip-text hover:border-border-hover hover:text-text-primary"
                   }`}
                 >
                   {opt.icon} {opt.label}
@@ -180,9 +180,9 @@ export function TripForm({ onSubmit, error }: TripFormProps) {
 
           {/* Interests */}
           <div>
-            <label className="block font-sans text-xs font-semibold uppercase tracking-wider text-white/50 mb-3">
+            <label className="block font-sans text-xs font-semibold uppercase tracking-wider text-text-tertiary mb-3">
               Interests{" "}
-              <span className="normal-case tracking-normal font-normal text-white/30">
+              <span className="normal-case tracking-normal font-normal text-text-muted">
                 (select multiple)
               </span>
             </label>
@@ -195,7 +195,7 @@ export function TripForm({ onSubmit, error }: TripFormProps) {
                   className={`rounded-full px-4 py-2 font-sans text-sm font-medium transition-all ${
                     interests.includes(opt.value)
                       ? "bg-[#E07A3A] text-white shadow-sm"
-                      : "bg-white/5 border border-white/10 text-white/60 hover:border-white/20 hover:text-white"
+                      : "bg-chip-bg border border-chip-border text-chip-text hover:border-border-hover hover:text-text-primary"
                   }`}
                 >
                   {opt.icon} {opt.label}
@@ -226,9 +226,7 @@ export function TripForm({ onSubmit, error }: TripFormProps) {
           </button>
         </form>
 
-      <p className="mt-5 text-center font-sans text-xs text-white/30">
-        Powered by AI agents with real-time weather, flights &amp; cultural data
-      </p>
+      
     </div>
   );
 }

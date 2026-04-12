@@ -27,7 +27,7 @@ export function TripCarousel({
   }));
 
   return (
-    <div className="min-h-screen bg-[#0F0E0D] flex flex-col items-center justify-center ">
+    <div className="min-h-screen bg-page-bg flex flex-col items-center justify-center ">
      
 
       {/* Aceternity Carousel */}

@@ -7,12 +7,12 @@ export default function Unauthorized() {
   const [showModal, setShowModal] = useState(true);
 
   return (
-    <div className="min-h-screen bg-[#0F0E0D] flex flex-col items-center justify-center px-4">
+    <div className="min-h-screen bg-page-bg page-texture flex flex-col items-center justify-center px-4">
       <div className="text-center max-w-md">
-        <h1 className="font-display text-3xl text-white mb-3">
+        <h1 className="font-display text-3xl text-text-primary mb-3">
           Sign in required
         </h1>
-        <p className="font-sans text-white/50 mb-6">
+        <p className="font-sans text-text-tertiary mb-6">
           You need to be signed in to access this page.
         </p>
         <button

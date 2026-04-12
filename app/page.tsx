@@ -158,7 +158,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0F0E0D] pt-24 pb-12 px-4 md:px-8">
+    <div className="min-h-screen bg-page-bg page-texture pt-24 pb-12 px-4 md:px-8">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-8 lg:gap-12 items-start">
         {/* Left: Form */}
         <div className="w-full max-w-2xl">

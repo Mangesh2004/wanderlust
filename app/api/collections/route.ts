@@ -81,8 +81,33 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const limitParam = url.searchParams.get("limit");
   const take = limitParam ? Math.min(parseInt(limitParam, 10), 50) : undefined;
+  const fields = url.searchParams.get("fields");
 
   try {
+    if (fields === "summary") {
+      // Lightweight query: skip the heavy destination `data` JSON blobs
+      const collections = await prisma.collection.findMany({
+        where: { profileId: user.id },
+        orderBy: { createdAt: "desc" },
+        ...(take ? { take } : {}),
+        select: {
+          id: true,
+          title: true,
+          vibe: true,
+          destinations: {
+            orderBy: { index: "asc" },
+            select: {
+              id: true,
+              index: true,
+              imageUrl: true,
+            },
+          },
+        },
+      });
+
+      return Response.json(collections);
+    }
+
     const collections = await prisma.collection.findMany({
       where: { profileId: user.id },
       orderBy: { createdAt: "desc" },
