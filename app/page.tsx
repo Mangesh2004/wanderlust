@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useCallback, useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import type { TripInput, Destination } from "@/lib/trip/schema";
 import { TripForm } from "./components/trip-form";
 import { TripLoading, type StreamEvent } from "./components/trip-loading";
@@ -12,10 +12,17 @@ import { RecentTrips } from "./components/recent-trips";
 export default function Home() {
   const { user } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const [loading, setLoading] = useState(false);
   const [events, setEvents] = useState<StreamEvent[]>([]);
   const [error, setError] = useState("");
   const [showAuthModal, setShowAuthModal] = useState(false);
+
+  // Reset loading state when navigating back to this page
+  useEffect(() => {
+    setLoading(false);
+    setEvents([]);
+  }, [pathname]);
 
   const handleSubmit = useCallback(
     async (input: TripInput) => {

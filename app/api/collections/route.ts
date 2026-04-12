@@ -1,5 +1,6 @@
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { ensureProfile } from "@/lib/supabase/ensure-profile";
+import { uploadBase64Image } from "@/lib/supabase/upload-image";
 import prisma from "@/lib/db";
 
 export async function POST(request: Request) {
@@ -29,6 +30,21 @@ export async function POST(request: Request) {
       title,
     } = body;
 
+    // Upload base64 images to Supabase Storage in parallel
+    const timestamp = Date.now();
+    const uploadedUrls: Record<number, string | null> = {};
+    if (imageUrls) {
+      await Promise.all(
+        Object.entries(imageUrls).map(async ([idx, base64Url]) => {
+          const i = Number(idx);
+          if (typeof base64Url === "string" && base64Url) {
+            const path = `${user.id}/${timestamp}_${i}.png`;
+            uploadedUrls[i] = await uploadBase64Image(supabase, base64Url, path);
+          }
+        }),
+      );
+    }
+
     const collection = await prisma.collection.create({
       data: {
         title: title ?? null,
@@ -45,7 +61,7 @@ export async function POST(request: Request) {
             (dest: Record<string, unknown>, i: number) => ({
               index: i,
               data: dest,
-              imageUrl: imageUrls?.[i] ?? null,
+              imageUrl: uploadedUrls[i] ?? imageUrls?.[i] ?? null,
             }),
           ),
         },
@@ -82,34 +98,26 @@ export async function GET(request: Request) {
 
   try {
     if (fields === "summary") {
-      // Lightweight: skip the heavy destination `data` JSON column
-      const { data: collections, error } = await supabase
-        .from("Collection")
-        .select(`
-          id, title, vibe, departureCity, travelDates, days, budget, travelWith, interests, createdAt,
-          destinations:CollectionDestination(id, index, imageUrl)
-        `)
-        .eq("profileId", user.id)
-        .order("createdAt", { ascending: false })
-        .limit(take);
-
-      if (error) throw error;
-      return Response.json(collections ?? []);
+      const collections = await prisma.collection.findMany({
+        where: { profileId: user.id },
+        orderBy: { createdAt: "desc" },
+        take,
+        select: {
+          id: true, title: true, vibe: true, departureCity: true, travelDates: true,
+          days: true, budget: true, travelWith: true, interests: true, createdAt: true,
+          destinations: { orderBy: { index: "asc" }, select: { id: true, index: true, imageUrl: true } },
+        },
+      });
+      return Response.json(collections);
     }
 
-    // Full query — uses Supabase PostgREST (HTTP, no TCP pool)
-    const { data: collections, error } = await supabase
-      .from("Collection")
-      .select(`
-        id, title, vibe, departureCity, travelDates, days, budget, travelWith, interests, createdAt, updatedAt, profileId,
-        destinations:CollectionDestination(id, collectionId, index, data, imageUrl, createdAt)
-      `)
-      .eq("profileId", user.id)
-      .order("createdAt", { ascending: false })
-      .limit(take);
-
-    if (error) throw error;
-    return Response.json(collections ?? []);
+    const collections = await prisma.collection.findMany({
+      where: { profileId: user.id },
+      orderBy: { createdAt: "desc" },
+      take,
+      include: { destinations: { orderBy: { index: "asc" } } },
+    });
+    return Response.json(collections);
   } catch (error) {
     return Response.json(
       {

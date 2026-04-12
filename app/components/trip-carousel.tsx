@@ -27,13 +27,8 @@ export function TripCarousel({
   }));
 
   return (
-    <div className="min-h-screen bg-page-bg flex flex-col items-center justify-center ">
-     
-
-      {/* Aceternity Carousel */}
-      <div className="relative overflow-hidden w-full h-full py-18">
-        <Carousel slides={slides} />
-      </div>
+    <div className="min-h-screen bg-page-bg flex items-center justify-center px-4 py-20">
+      <Carousel slides={slides} />
     </div>
   );
 }
