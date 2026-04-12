@@ -1,0 +1,88 @@
+<h2>Magazine Flip-Book: How should pages work?</h2>
+<p class="subtitle">Each destination becomes a multi-page spread. Full h-screen pages you flip through.</p>
+
+<div class="cards">
+  <!-- Option A -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:20px;background:#1a1a1a;">
+      <div style="display:flex;gap:4px;height:200px;">
+        <div style="flex:1;background:#2a2a2a;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#888;font-size:11px;text-align:center;padding:8px;">
+          <div style="font-size:24px;margin-bottom:4px;">🖼️</div>
+          <b style="color:#E07A3A;">Page 1</b><br>Full-bleed poster<br>+ destination name
+        </div>
+        <div style="flex:1;background:#2a2a2a;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#888;font-size:11px;text-align:center;padding:8px;">
+          <div style="font-size:24px;margin-bottom:4px;">📋</div>
+          <b style="color:#E07A3A;">Page 2</b><br>Quick facts<br>+ description
+        </div>
+        <div style="flex:1;background:#2a2a2a;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#888;font-size:11px;text-align:center;padding:8px;">
+          <div style="font-size:24px;margin-bottom:4px;">📅</div>
+          <b style="color:#E07A3A;">Page 3</b><br>3-day<br>itinerary
+        </div>
+        <div style="flex:1;background:#2a2a2a;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#888;font-size:11px;text-align:center;padding:8px;">
+          <div style="font-size:24px;margin-bottom:4px;">💡</div>
+          <b style="color:#E07A3A;">Page 4</b><br>Insider tips<br>+ local phrase
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:12px;color:#666;font-size:11px;">
+        ← swipe / arrow keys →&nbsp;&nbsp;&nbsp;Each page = 100vh
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A. Vertical Flip (Scroll-snap)</h3>
+      <p>Scroll down to flip pages. Each page is full viewport height. CSS scroll-snap gives that satisfying page-lock feel. Simple, works everywhere, mobile-friendly.</p>
+    </div>
+  </div>
+
+  <!-- Option B -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:20px;background:#1a1a1a;">
+      <div style="display:flex;gap:4px;height:200px;">
+        <div style="flex:1;background:#2a2a2a;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#888;font-size:11px;text-align:center;padding:8px;position:relative;overflow:hidden;">
+          <div style="position:absolute;top:0;left:0;right:50%;bottom:0;background:linear-gradient(90deg,#333,#2a2a2a);border-right:2px solid #555;"></div>
+          <div style="position:relative;z-index:1;">
+            <div style="font-size:24px;margin-bottom:4px;">📖</div>
+            <b style="color:#E07A3A;">Spread</b><br>Left: poster<br>Right: content
+          </div>
+        </div>
+        <div style="flex:1;background:#2a2a2a;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#888;font-size:11px;text-align:center;padding:8px;">
+          <div style="font-size:24px;margin-bottom:4px;">🔄</div>
+          <b style="color:#E07A3A;">Flip</b><br>3D page turn<br>animation
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:12px;color:#666;font-size:11px;">
+        Click edges or arrow keys to turn pages
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B. Horizontal Book (3D page flip)</h3>
+      <p>Like an actual book — two-page spreads with 3D CSS page-turn animations. Poster on left, content on right. Impressive but complex, may feel gimmicky on mobile.</p>
+    </div>
+  </div>
+
+  <!-- Option C -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:20px;background:#1a1a1a;">
+      <div style="display:flex;gap:4px;height:200px;">
+        <div style="flex:1;background:#2a2a2a;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#888;font-size:11px;text-align:center;padding:8px;">
+          <div style="font-size:24px;margin-bottom:4px;">◀</div>
+          <b style="color:#E07A3A;">Dest 1</b><br>Bansko
+        </div>
+        <div style="flex:1.5;background:#333;border-radius:8px;border:2px solid #E07A3A;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#ccc;font-size:11px;text-align:center;padding:8px;">
+          <div style="font-size:24px;margin-bottom:4px;">📖</div>
+          <b style="color:#E07A3A;">Active Destination</b><br>Full h-screen pages<br>scroll-snap vertical<br><span style="color:#666;">↓ poster → facts → itinerary → tips ↓</span>
+        </div>
+        <div style="flex:1;background:#2a2a2a;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#888;font-size:11px;text-align:center;padding:8px;">
+          <div style="font-size:24px;margin-bottom:4px;">▶</div>
+          <b style="color:#E07A3A;">Dest 3</b><br>Valle Nevado
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:12px;color:#666;font-size:11px;">
+        ← → switch destinations&nbsp;&nbsp;|&nbsp;&nbsp;↑ ↓ flip pages within
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C. Hybrid: Horizontal destinations + Vertical pages (Recommended)</h3>
+      <p>Swipe left/right to switch between destinations. Within each destination, scroll down through full-screen pages (poster → facts → itinerary → tips). Best of both worlds — feels like flipping through a magazine. Tab bar or dots at top for destination navigation.</p>
+    </div>
+  </div>
+</div>
