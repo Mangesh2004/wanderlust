@@ -54,7 +54,7 @@ export async function POST(request: Request) {
       include: { destinations: true },
     });
 
-    revalidateTag("collections");
+    revalidateTag("collections", "max");
 
     return Response.json(collection, { status: 201 });
   } catch (error) {
