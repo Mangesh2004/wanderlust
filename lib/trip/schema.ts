@@ -19,6 +19,30 @@ export const BUDGET_LABELS: Record<string, string> = {
   high: "$2,500+ USD",
 };
 
+// --- Phase 1 intermediate schema ---
+export const phase1DestinationSchema = z.object({
+  name: z.string(),
+  country: z.string(),
+  state: z.string(),
+  coordinates: z.object({ lat: z.number(), lon: z.number() }),
+  weather: z.object({
+    summary: z.string(),
+    forecast: z.array(z.object({
+      day: z.string(),
+      high: z.number(),
+      low: z.number(),
+      condition: z.string(),
+      icon: z.string(),
+    })),
+  }),
+});
+
+export const phase1ResultSchema = z.object({
+  selectedDestinations: z.array(phase1DestinationSchema).min(1).max(5),
+});
+
+export type Phase1Destination = z.infer<typeof phase1DestinationSchema>;
+
 // --- AI Output Schema ---
 export const destinationSchema = z.object({
   name: z.string(),

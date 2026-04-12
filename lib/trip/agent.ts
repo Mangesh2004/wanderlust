@@ -1,11 +1,15 @@
 import "server-only";
-import OpenAI from "openai";
-import type { ChatCompletionMessageParam, ChatCompletionTool } from "openai/resources/chat/completions";
+import Anthropic from "@anthropic-ai/sdk";
+import type { MessageParam, Tool, ContentBlock } from "@anthropic-ai/sdk/resources/messages";
+import { z } from "zod";
 import {
   type TripInput,
   BUDGET_LABELS,
   extractJSON,
   destinationSchema,
+  phase1DestinationSchema,
+  phase1ResultSchema,
+  type Phase1Destination,
   type TripResult,
   type Destination,
 } from "./schema";
@@ -20,202 +24,284 @@ import {
   searchGeneral,
 } from "./tools/tavily-search";
 
-const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4.1-mini";
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const ANTHROPIC_MODEL = "claude-haiku-4-5-20251001";
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 export interface TripEvent {
   type: "status" | "tool_call" | "tool_result" | "thinking" | "result" | "error";
   data: Record<string, unknown>;
 }
 
-// --- Phase 1 intermediate type ---
-
-interface Phase1Destination {
-  name: string;
-  country: string;
-  state: string;
-  coordinates: { lat: number; lon: number };
-  weather: {
-    summary: string;
-    forecast: Array<{
-      day: string;
-      high: number;
-      low: number;
-      condition: string;
-      icon: string;
-    }>;
-  };
-}
-
 // --- Tool definitions ---
 
-const phase1Tools: ChatCompletionTool[] = [
+const phase1Tools: Tool[] = [
   {
-    type: "function",
-    function: {
-      name: "geocode_location",
-      description:
-        "Geocode a place name → returns { lat, lon, displayName, country }. Use this FIRST for every destination to get real coordinates.",
-      parameters: {
-        type: "object",
-        properties: {
-          query: {
-            type: "string",
-            description:
-              "Location name, e.g. 'Banff, Canada' or 'Grindelwald, Switzerland'",
-          },
+    name: "geocode_location",
+    description:
+      "Geocode a place name → returns { lat, lon, displayName, country }. Use this FIRST for every destination to get real coordinates.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        query: {
+          type: "string",
+          description:
+            "Location name, e.g. 'Banff, Canada' or 'Grindelwald, Switzerland'",
         },
-        required: ["query"],
       },
+      required: ["query"],
     },
   },
   {
-    type: "function",
-    function: {
-      name: "get_weather_forecast",
-      description:
-        "Get weather forecast for specific dates at coordinates. Returns array of { day, high, low, condition } for each day. Pass the trip start_date so it fetches weather for the ACTUAL travel dates, not today.",
-      parameters: {
-        type: "object",
-        properties: {
-          lat: { type: "number" },
-          lon: { type: "number" },
-          days: { type: "number", description: "Number of days to forecast" },
-          start_date: {
-            type: "string",
-            description:
-              "YYYY-MM-DD — the trip start date. REQUIRED to get forecast for correct dates.",
+    name: "get_weather_forecast",
+    description:
+      "Get weather forecast for specific dates at coordinates. Returns array of { day, high, low, condition } for each day. Pass the trip start_date so it fetches weather for the ACTUAL travel dates, not today.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        lat: { type: "number" },
+        lon: { type: "number" },
+        days: { type: "number", description: "Number of days to forecast" },
+        start_date: {
+          type: "string",
+          description:
+            "YYYY-MM-DD — the trip start date. REQUIRED to get forecast for correct dates.",
+        },
+      },
+      required: ["lat", "lon", "days", "start_date"],
+    },
+  },
+  {
+    name: "submit_destinations",
+    description:
+      "Submit the final selected destinations after all research (geocoding + weather) is complete. Call this tool ONCE with all selected destinations.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        selectedDestinations: {
+          type: "array",
+          description:
+            "The best 3 destinations matching the vibe and weather criteria",
+          items: {
+            type: "object",
+            properties: {
+              name: { type: "string" },
+              country: { type: "string" },
+              state: {
+                type: "string",
+                description: "State/province or empty string",
+              },
+              coordinates: {
+                type: "object",
+                properties: {
+                  lat: { type: "number" },
+                  lon: { type: "number" },
+                },
+                required: ["lat", "lon"],
+              },
+              weather: {
+                type: "object",
+                properties: {
+                  summary: {
+                    type: "string",
+                    description: "Weather summary with emoji",
+                  },
+                  forecast: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        day: { type: "string", description: "YYYY-MM-DD" },
+                        high: { type: "number" },
+                        low: { type: "number" },
+                        condition: { type: "string" },
+                        icon: { type: "string", description: "Weather emoji" },
+                      },
+                      required: ["day", "high", "low", "condition", "icon"],
+                    },
+                  },
+                },
+                required: ["summary", "forecast"],
+              },
+            },
+            required: ["name", "country", "state", "coordinates", "weather"],
           },
         },
-        required: ["lat", "lon", "days", "start_date"],
       },
+      required: ["selectedDestinations"],
     },
   },
 ];
 
-const phase2Tools: ChatCompletionTool[] = [
+const phase2Tools: Tool[] = [
   {
-    type: "function",
-    function: {
-      name: "convert_currency",
-      description:
-        "Get exchange rate from one currency to another. Returns { from, to, rate }. Use the rate to convert local prices to USD in your output.",
-      parameters: {
-        type: "object",
-        properties: {
-          from: {
-            type: "string",
-            description: "Source currency code, e.g. USD",
-          },
-          to: {
-            type: "string",
-            description: "Target currency code, e.g. CAD, CHF, JPY, INR",
-          },
+    name: "convert_currency",
+    description:
+      "Get exchange rate from one currency to another. Returns { from, to, rate }. Use the rate to convert local prices to USD in your output.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        from: {
+          type: "string",
+          description: "Source currency code, e.g. USD",
         },
-        required: ["from", "to"],
+        to: {
+          type: "string",
+          description: "Target currency code, e.g. CAD, CHF, JPY, INR",
+        },
       },
+      required: ["from", "to"],
     },
   },
   {
-    type: "function",
-    function: {
-      name: "search_hotels",
-      description:
-        "Web search for hotels with prices. Returns Tavily answer + source snippets. You must extract hotel names, ratings, and prices from the results and convert to USD.",
-      parameters: {
-        type: "object",
-        properties: {
-          destination: { type: "string", description: "City/area name" },
-          checkIn: { type: "string", description: "YYYY-MM-DD" },
-          checkOut: { type: "string", description: "YYYY-MM-DD" },
-          budget: {
-            type: "string",
-            description: "budget level: 'budget', 'mid-range', or 'luxury'",
-          },
+    name: "search_hotels",
+    description:
+      "Web search for hotels with prices. Returns Tavily answer + source snippets. You must extract hotel names, ratings, and prices from the results and convert to USD.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        destination: { type: "string", description: "City/area name" },
+        checkIn: { type: "string", description: "YYYY-MM-DD" },
+        checkOut: { type: "string", description: "YYYY-MM-DD" },
+        budget: {
+          type: "string",
+          description: "budget level: 'budget', 'mid-range', or 'luxury'",
         },
-        required: ["destination", "checkIn", "checkOut", "budget"],
       },
+      required: ["destination", "checkIn", "checkOut", "budget"],
     },
   },
   {
-    type: "function",
-    function: {
-      name: "search_flights",
-      description:
-        "Web search for flights with prices. Returns Tavily answer + source snippets. Extract airline names, prices, and durations. Convert all prices to USD.",
-      parameters: {
-        type: "object",
-        properties: {
-          from: {
-            type: "string",
-            description: "Departure city name (NOT airport code)",
-          },
-          to: {
-            type: "string",
-            description: "Destination city or nearest major airport city",
-          },
-          date: { type: "string", description: "YYYY-MM-DD departure date" },
-          returnDate: {
-            type: "string",
-            description: "YYYY-MM-DD return date (optional)",
-          },
+    name: "search_flights",
+    description:
+      "Web search for flights with prices. Returns Tavily answer + source snippets. Extract airline names, prices, and durations. Convert all prices to USD.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        from: {
+          type: "string",
+          description: "Departure city name (NOT airport code)",
         },
-        required: ["from", "to", "date"],
+        to: {
+          type: "string",
+          description: "Destination city or nearest major airport city",
+        },
+        date: { type: "string", description: "YYYY-MM-DD departure date" },
+        returnDate: {
+          type: "string",
+          description: "YYYY-MM-DD return date (optional)",
+        },
       },
+      required: ["from", "to", "date"],
     },
   },
   {
-    type: "function",
-    function: {
-      name: "search_transport",
-      description:
-        "Web search for local transport options and costs. Returns bus/taxi/train/metro info with typical prices. Convert costs to USD.",
-      parameters: {
-        type: "object",
-        properties: {
-          destination: { type: "string", description: "City name" },
-        },
-        required: ["destination"],
+    name: "search_transport",
+    description:
+      "Web search for local transport options and costs. Returns bus/taxi/train/metro info with typical prices. Convert costs to USD.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        destination: { type: "string", description: "City name" },
       },
+      required: ["destination"],
     },
   },
   {
-    type: "function",
-    function: {
-      name: "search_activities",
-      description:
-        "Web search for activities, tours, and things to do. Returns options with prices. Filter by user interests.",
-      parameters: {
-        type: "object",
-        properties: {
-          destination: { type: "string", description: "City name" },
-          interests: {
-            type: "string",
-            description:
-              "Comma-separated interests like 'hiking, food, culture'",
-          },
-          budget: {
-            type: "string",
-            description: "budget level: 'budget', 'mid-range', or 'luxury'",
-          },
+    name: "search_activities",
+    description:
+      "Web search for activities, tours, and things to do. Returns options with prices. Filter by user interests.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        destination: { type: "string", description: "City name" },
+        interests: {
+          type: "string",
+          description:
+            "Comma-separated interests like 'hiking, food, culture'",
         },
-        required: ["destination", "interests", "budget"],
+        budget: {
+          type: "string",
+          description: "budget level: 'budget', 'mid-range', or 'luxury'",
+        },
       },
+      required: ["destination", "interests", "budget"],
     },
   },
   {
-    type: "function",
-    function: {
-      name: "search_general",
-      description:
-        "General web search for anything not covered by other tools. Use for food costs, cultural tips, or specific questions.",
-      parameters: {
-        type: "object",
-        properties: {
-          query: { type: "string", description: "Search query" },
-        },
-        required: ["query"],
+    name: "search_general",
+    description:
+      "General web search for anything not covered by other tools. Use for food costs, cultural tips, or specific questions.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        query: { type: "string", description: "Search query" },
       },
+      required: ["query"],
+    },
+  },
+  {
+    name: "submit_destination_details",
+    description:
+      "Submit the fully researched destination details. Call this ONCE after using all research tools to compile the final destination data.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        name: { type: "string" },
+        country: { type: "string" },
+        state: { type: "string" },
+        coordinates: {
+          type: "object",
+          properties: { lat: { type: "number" }, lon: { type: "number" } },
+          required: ["lat", "lon"],
+        },
+        tagline: { type: "string" },
+        description: { type: "string" },
+        history: { type: "string" },
+        days: { type: "number" },
+        totalBudget: { type: "string" },
+        weather: {
+          type: "object",
+          description: "Weather data with summary and forecast",
+        },
+        costEstimate: {
+          type: "object",
+          description:
+            "Cost breakdown: localCurrency, accommodation, food, transport, activities, grandTotal, withinBudget",
+        },
+        hotels: { type: "array", description: "Hotel options array" },
+        flights: { type: "array", description: "Flight options array" },
+        transport: {
+          type: "array",
+          description: "Local transport options array",
+        },
+        itinerary: { type: "array", description: "Day-by-day itinerary" },
+        culture: {
+          type: "object",
+          description:
+            "Culture info: localPhrase, mustTryFood, tips, activities",
+        },
+        imagePrompt: { type: "string" },
+        imageUrl: { type: ["string", "null"] },
+      },
+      required: [
+        "name",
+        "country",
+        "coordinates",
+        "tagline",
+        "description",
+        "history",
+        "days",
+        "totalBudget",
+        "weather",
+        "costEstimate",
+        "hotels",
+        "flights",
+        "transport",
+        "itinerary",
+        "culture",
+        "imagePrompt",
+        "imageUrl",
+      ],
     },
   },
 ];
@@ -310,21 +396,7 @@ Thinking:
 Final 3: Manali, Interlaken, Nagano
 
 ## OUTPUT FORMAT
-After selecting the best 3, return ONLY valid JSON (no markdown, no explanation):
-{
-  "selectedDestinations": [
-    {
-      "name": "string",
-      "country": "string",
-      "state": "string (or empty string)",
-      "coordinates": { "lat": number, "lon": number },
-      "weather": {
-        "summary": "string with emoji",
-        "forecast": [{ "day": "YYYY-MM-DD", "high": number, "low": number, "condition": "string", "icon": "emoji" }]
-      }
-    }
-  ]
-}`;
+After selecting the best 3, call the **submit_destinations** tool with your final selection. Do NOT return raw JSON as text — always use the tool.`;
 }
 
 function buildPhase2Prompt(input: TripInput, dest: Phase1Destination): string {
@@ -398,7 +470,8 @@ Use ALL tools to gather real data. Then compile the final JSON.
 - NEVER mention poster, illustration, art deco, cartoon, or vintage. The image must look like a real photograph.
 
 ## OUTPUT FORMAT
-Return ONLY valid JSON (no markdown, no explanation) for this single destination:
+After completing all research, call the **submit_destination_details** tool with the data below as the tool input. Do NOT return raw JSON as text — always use the tool.
+The tool input must match this structure:
 {
   "name": "${dest.name}",
   "country": "${dest.country}",
@@ -441,12 +514,11 @@ async function* runPhase1(
   resultRef: { value: Phase1Destination[] },
 ): AsyncGenerator<TripEvent> {
   const systemPrompt = buildPhase1Prompt(input);
-  const messages: ChatCompletionMessageParam[] = [
-    { role: "system", content: systemPrompt },
+  const messages: MessageParam[] = [
     {
       role: "user",
       content:
-        "Select the best 3 destinations. Geocode and check weather for all candidates. Return the final selection as JSON.",
+        "Select the best 3 destinations. Geocode and check weather for all candidates. Submit the final selection using the submit_destinations tool.",
     },
   ];
 
@@ -458,36 +530,67 @@ async function* runPhase1(
     const statusMessage = getPhase1Status(lastTools, iteration);
     yield { type: "status", data: { message: statusMessage, iteration } };
 
-    const response = await client.chat.completions.create({
-      model: OPENAI_MODEL,
+    const response = await client.messages.create({
+      model: ANTHROPIC_MODEL,
       max_tokens: 8192,
+      system: systemPrompt,
       tools: phase1Tools,
       messages,
     });
 
-    const choice = response.choices[0];
-    const msg = choice.message;
+    const toolUseBlocks = response.content.filter(
+      (b): b is Extract<ContentBlock, { type: "tool_use" }> => b.type === "tool_use",
+    );
 
-    if (choice.finish_reason === "stop" || !msg.tool_calls?.length) {
+    // Check for submit tool — structured output path
+    const submitBlock = toolUseBlocks.find(
+      (tc) => tc.name === "submit_destinations",
+    );
+    if (submitBlock) {
       yield {
         type: "status",
         data: { message: "Selecting best destinations..." },
       };
-      const raw = msg.content || "";
-      console.log("[phase1] raw response:", raw.slice(0, 2000));
+      try {
+        const result = phase1ResultSchema.parse(submitBlock.input);
+        resultRef.value = result.selectedDestinations;
+      } catch (err) {
+        yield {
+          type: "error",
+          data: {
+            message: `Phase 1 validation failed: ${err instanceof Error ? err.message : "unknown"}`,
+          },
+        };
+      }
+      return;
+    }
+
+    // Text fallback — if model returns end_turn instead of using submit tool
+    if (response.stop_reason === "end_turn" || toolUseBlocks.length === 0) {
+      yield {
+        type: "status",
+        data: { message: "Selecting best destinations..." },
+      };
+      const textBlock = response.content.find(
+        (b): b is Extract<ContentBlock, { type: "text" }> => b.type === "text",
+      );
+      const raw = textBlock?.text || "";
+      console.log("[phase1] raw response (text fallback):", raw.slice(0, 2000));
 
       if (raw.trim()) {
         try {
           const jsonStr = extractJSON(raw);
           const parsed = JSON.parse(jsonStr);
-          // Accept multiple possible shapes
+          // Accept multiple possible shapes, validate each with Zod
           const dests =
             parsed.selectedDestinations ||
             parsed.selected_destinations ||
             parsed.destinations ||
             (Array.isArray(parsed) ? parsed : null);
           if (Array.isArray(dests) && dests.length > 0) {
-            resultRef.value = dests;
+            resultRef.value = z
+              .array(phase1DestinationSchema)
+              .parse(dests);
           } else {
             yield {
               type: "error",
@@ -513,33 +616,34 @@ async function* runPhase1(
       return;
     }
 
-    // Has tool calls
-    const fnCalls = msg.tool_calls.filter((tc) => tc.type === "function");
-    for (const tc of fnCalls) {
+    // Has tool calls — execute research tools
+    for (const tc of toolUseBlocks) {
       yield {
         type: "tool_call",
-        data: { tool: tc.function.name, input: JSON.parse(tc.function.arguments) },
+        data: { tool: tc.name, input: tc.input },
       };
     }
 
-    messages.push(msg);
+    messages.push({ role: "assistant", content: response.content });
 
+    const toolResults: Array<{ type: "tool_result"; tool_use_id: string; content: string }> = [];
     const currentTools: string[] = [];
-    for (const tc of fnCalls) {
-      const args = JSON.parse(tc.function.arguments);
-      const output = await executeTool(tc.function.name, args);
+    for (const tc of toolUseBlocks) {
+      const args = tc.input as Record<string, any>;
+      const output = await executeTool(tc.name, args);
       yield {
         type: "tool_result",
-        data: { tool: tc.function.name, input: args, output },
+        data: { tool: tc.name, input: args, output },
       };
-      messages.push({
-        role: "tool",
-        tool_call_id: tc.id,
+      toolResults.push({
+        type: "tool_result",
+        tool_use_id: tc.id,
         content: output,
       });
-      currentTools.push(tc.function.name);
+      currentTools.push(tc.name);
     }
 
+    messages.push({ role: "user", content: toolResults });
     lastTools = currentTools;
   }
 
@@ -553,11 +657,10 @@ async function* runPhase2(
   resultRef: { value: Destination | null },
 ): AsyncGenerator<TripEvent> {
   const systemPrompt = buildPhase2Prompt(input, dest);
-  const messages: ChatCompletionMessageParam[] = [
-    { role: "system", content: systemPrompt },
+  const messages: MessageParam[] = [
     {
       role: "user",
-      content: `Research ${dest.name}, ${dest.country} thoroughly. Use all tools to gather real data, then compile the complete destination JSON.`,
+      content: `Research ${dest.name}, ${dest.country} thoroughly. Use all tools to gather real data, then submit the results using the submit_destination_details tool.`,
     },
   ];
 
@@ -572,22 +675,50 @@ async function* runPhase2(
       data: { message: statusMessage, iteration, destinationIndex: index },
     };
 
-    const response = await client.chat.completions.create({
-      model: OPENAI_MODEL,
+    const response = await client.messages.create({
+      model: ANTHROPIC_MODEL,
       max_tokens: 16384,
+      system: systemPrompt,
       tools: phase2Tools,
       messages,
     });
 
-    const choice = response.choices[0];
-    const msg = choice.message;
+    const toolUseBlocks = response.content.filter(
+      (b): b is Extract<ContentBlock, { type: "tool_use" }> => b.type === "tool_use",
+    );
 
-    if (choice.finish_reason === "stop" || !msg.tool_calls?.length) {
+    // Check for submit tool — structured output path
+    const submitBlock = toolUseBlocks.find(
+      (tc) => tc.name === "submit_destination_details",
+    );
+    if (submitBlock) {
       yield {
         type: "status",
         data: { message: `${dest.name}: Compiling trip details...` },
       };
-      const raw = msg.content || "";
+      try {
+        resultRef.value = destinationSchema.parse(submitBlock.input);
+      } catch (err) {
+        yield {
+          type: "error",
+          data: {
+            message: `${dest.name}: Schema validation failed: ${err instanceof Error ? err.message : "unknown"}`,
+          },
+        };
+      }
+      return;
+    }
+
+    // Text fallback — if model returns end_turn instead of using submit tool
+    if (response.stop_reason === "end_turn" || toolUseBlocks.length === 0) {
+      yield {
+        type: "status",
+        data: { message: `${dest.name}: Compiling trip details...` },
+      };
+      const textBlock = response.content.find(
+        (b): b is Extract<ContentBlock, { type: "text" }> => b.type === "text",
+      );
+      const raw = textBlock?.text || "";
 
       if (raw.trim()) {
         try {
@@ -607,33 +738,34 @@ async function* runPhase2(
       return;
     }
 
-    // Has tool calls
-    const fnCalls = msg.tool_calls.filter((tc) => tc.type === "function");
-    for (const tc of fnCalls) {
+    // Has tool calls — execute research tools
+    for (const tc of toolUseBlocks) {
       yield {
         type: "tool_call",
-        data: { tool: tc.function.name, input: JSON.parse(tc.function.arguments) },
+        data: { tool: tc.name, input: tc.input },
       };
     }
 
-    messages.push(msg);
+    messages.push({ role: "assistant", content: response.content });
 
+    const toolResults: Array<{ type: "tool_result"; tool_use_id: string; content: string }> = [];
     const currentTools: string[] = [];
-    for (const tc of fnCalls) {
-      const args = JSON.parse(tc.function.arguments);
-      const output = await executeTool(tc.function.name, args);
+    for (const tc of toolUseBlocks) {
+      const args = tc.input as Record<string, any>;
+      const output = await executeTool(tc.name, args);
       yield {
         type: "tool_result",
-        data: { tool: tc.function.name, input: args, output },
+        data: { tool: tc.name, input: args, output },
       };
-      messages.push({
-        role: "tool",
-        tool_call_id: tc.id,
+      toolResults.push({
+        type: "tool_result",
+        tool_use_id: tc.id,
         content: output,
       });
-      currentTools.push(tc.function.name);
+      currentTools.push(tc.name);
     }
 
+    messages.push({ role: "user", content: toolResults });
     lastTools = currentTools;
   }
 

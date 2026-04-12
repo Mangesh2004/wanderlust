@@ -3,7 +3,9 @@
     "allow": [
       "Bash(gh api:*)",
       "WebFetch(domain:www.npmjs.com)",
-      "Bash(curl -s \"http://localhost:3001/_next/static/chunks/%5Broot-of-the-server%5D__0er9cbj._.css\")"
+      "Bash(curl -s \"http://localhost:3001/_next/static/chunks/%5Broot-of-the-server%5D__0er9cbj._.css\")",
+      "Bash(pnpm run:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }
