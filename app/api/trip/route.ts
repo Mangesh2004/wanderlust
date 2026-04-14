@@ -1,10 +1,8 @@
-import { tripInputSchema, type TripResult } from "@/lib/trip/schema";
+import { tripInputSchema } from "@/lib/trip/schema";
 import { runTripAgentStream } from "@/lib/trip/agent";
-import { generateTripImage } from "@/lib/trip/tools/image-gen";
 import { createSupabaseServer } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
-  // Auth gate
   const supabase = await createSupabaseServer();
   const {
     data: { user },
@@ -35,64 +33,9 @@ export async function POST(request: Request) {
         };
 
         try {
-          let tripResult: TripResult | null = null;
-
           for await (const event of runTripAgentStream(input)) {
             send(event as unknown as Record<string, unknown>);
-
-            if (
-              event.type === "result" &&
-              event.data.success &&
-              event.data.result
-            ) {
-              tripResult = event.data.result as unknown as TripResult;
-            }
           }
-
-          if (tripResult && tripResult.destinations.length > 0) {
-            for (let i = 0; i < tripResult.destinations.length; i++) {
-              send({
-                type: "destination_complete",
-                data: { index: i, destination: tripResult.destinations[i] },
-              });
-            }
-
-            send({
-              type: "status",
-              data: { message: "Generating travel poster images..." },
-            });
-            await new Promise<void>((resolveAll) => {
-              let done = 0;
-              const total = tripResult!.destinations.length;
-
-              tripResult!.destinations.forEach((dest, i) => {
-                send({
-                  type: "image_generating",
-                  data: { index: i, name: dest.name },
-                });
-                generateTripImage(dest.imagePrompt)
-                  .then((imageData) => {
-                    send({
-                      type: "image_complete",
-                      data: { index: i, imageUrl: imageData || "" },
-                    });
-                  })
-                  .catch(() => {
-                    send({
-                      type: "image_complete",
-                      data: { index: i, imageUrl: "" },
-                    });
-                  })
-                  .finally(() => {
-                    done++;
-                    if (done >= total) resolveAll();
-                  });
-              });
-
-              setTimeout(() => resolveAll(), 60000);
-            });
-          }
-
           send({ type: "done", data: {} });
         } catch (error) {
           send({

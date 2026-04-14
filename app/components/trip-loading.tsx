@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 export interface StreamEvent {
   type: string;
   message?: string;
+  agent?: string;
   tool?: string;
   toolInput?: Record<string, unknown>;
   toolOutput?: string;
@@ -20,6 +21,10 @@ function summarizeToolInput(tool: string, input: Record<string, unknown>): strin
   if (tool === "get_weather_forecast")
     return `${(input.lat as number)?.toFixed?.(1) ?? input.lat}, ${(input.lon as number)?.toFixed?.(1) ?? input.lon}`;
   if (tool === "convert_currency") return `${input.from} \u2192 ${input.to}`;
+  if (tool === "generate_travel_image")
+    return `"${String(input.prompt ?? "").slice(0, 48)}..."`;
+  if (tool === "web_search" || tool === "web_search_call")
+    return `"${String(input.query ?? input.q ?? "").slice(0, 40)}"`;
   if (tool === "search_flights") return `${input.from} \u2192 ${input.to}`;
   if (tool === "search_hotels") return `${input.destination}, ${input.budget}`;
   if (tool === "search_transport") return `${input.destination}`;
@@ -163,6 +168,19 @@ function EventLine({ event }: { event: StreamEvent }) {
         </span>
         <span className="font-mono text-xs text-text-muted italic">
           {event.thinking?.slice(0, 120)}
+        </span>
+      </div>
+    );
+  }
+
+  if (event.type === "agent_update" && event.agent) {
+    return (
+      <div className="flex items-center gap-2 ml-2 animate-fade-in">
+        <span className="font-mono text-xs text-text-muted uppercase tracking-wider">
+          Agent
+        </span>
+        <span className="font-mono text-xs text-[var(--accent-orange)]">
+          {event.agent}
         </span>
       </div>
     );

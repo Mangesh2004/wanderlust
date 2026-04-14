@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import type { Destination } from "@/lib/trip/schema";
 
 interface TripDetailProps {
@@ -11,8 +12,23 @@ interface TripDetailProps {
 export function TripDetail({ destination, imageUrl, onBack }: TripDetailProps) {
   const dest = destination;
 
+  const paletteStyle = (
+    dest.colorPalette
+      ? {
+          "--color-dest-primary": dest.colorPalette.primary,
+          "--color-dest-secondary": dest.colorPalette.secondary,
+          "--color-dest-accent": dest.colorPalette.accent,
+          "--color-dest-bg": dest.colorPalette.background,
+          "--color-dest-text": dest.colorPalette.text,
+        }
+      : undefined
+  ) as CSSProperties | undefined;
+
   return (
-    <div className="min-h-screen bg-page-bg page-texture">
+    <div
+      className="min-h-screen bg-page-bg page-texture"
+      style={paletteStyle}
+    >
       {/* Hero */}
       <div className="relative h-[50vh] min-h-[400px] overflow-hidden bg-surface-elevated">
         {imageUrl ? (

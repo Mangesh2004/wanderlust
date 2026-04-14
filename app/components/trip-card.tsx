@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import type { Destination } from "@/lib/trip/schema";
 
 interface TripCardProps {
@@ -11,11 +12,24 @@ interface TripCardProps {
 }
 
 export function TripCard({ destination, imageUrl, isActive, onExplore, generatingLabel }: TripCardProps) {
+  const paletteStyle = (
+    destination.colorPalette
+      ? {
+          "--color-dest-primary": destination.colorPalette.primary,
+          "--color-dest-secondary": destination.colorPalette.secondary,
+          "--color-dest-accent": destination.colorPalette.accent,
+          "--color-dest-bg": destination.colorPalette.background,
+          "--color-dest-text": destination.colorPalette.text,
+        }
+      : undefined
+  ) as CSSProperties | undefined;
+
   return (
     <div
       className={`w-72 rounded-2xl overflow-hidden transition-shadow ${
         isActive ? "shadow-2xl ring-2 ring-white/20" : "shadow-md"
       }`}
+      style={paletteStyle}
     >
       <div className="aspect-[3/4] relative overflow-hidden bg-gradient-to-br from-[#E07A3A]/20 to-[#D4682B]/10">
         {imageUrl ? (

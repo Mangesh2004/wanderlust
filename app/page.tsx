@@ -118,6 +118,17 @@ export default function Home() {
                 case "error":
                   setError(event.data.message || "Something went wrong");
                   break;
+                case "agent_update":
+                  setEvents((prev) => [
+                    ...prev,
+                    {
+                      type: "agent_update",
+                      agent: String(event.data.agent ?? ""),
+                    },
+                  ]);
+                  break;
+                case "done":
+                  break;
               }
             } catch (parseError) {
               if (parseError instanceof SyntaxError) continue;
@@ -132,26 +143,46 @@ export default function Home() {
           .map((k) => collectedDests[Number(k)]);
 
         if (destsArray.length > 0) {
-          const saveRes = await fetch("/api/collections", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              ...input,
-              destinations: destsArray,
-              imageUrls: collectedImages,
-            }),
-          });
-
-          if (saveRes.ok) {
-            const collection = await saveRes.json();
-            router.push(`/collections/${collection.id}`);
-            return;
+          const payload = {
+            ...input,
+            destinations: destsArray,
+            imageUrls: collectedImages,
+          };
+          let saveRes: Response | null = null;
+          let lastSaveError = "";
+          for (let attempt = 0; attempt < 2; attempt++) {
+            saveRes = await fetch("/api/collections", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+            if (saveRes.ok) {
+              const collection = await saveRes.json();
+              router.push(`/collections/${collection.id}`);
+              return;
+            }
+            try {
+              const errBody = await saveRes.json();
+              lastSaveError =
+                typeof errBody.error === "string"
+                  ? errBody.error
+                  : saveRes.statusText;
+            } catch {
+              lastSaveError = saveRes.statusText || "Save failed";
+            }
+            console.error("[collections POST]", saveRes.status, lastSaveError);
           }
+          setLoading(false);
+          setError(
+            lastSaveError
+              ? `Could not save trip: ${lastSaveError}`
+              : "Trip generated but failed to save. Please try again.",
+          );
+          return;
         }
 
-        // Fallback if save failed
         setLoading(false);
-        setError("Trip generated but failed to save. Please try again.");
+        setError("Trip generated but no destinations to save. Please try again.");
       } catch (err) {
         setLoading(false);
         setError(err instanceof Error ? err.message : "Something went wrong");

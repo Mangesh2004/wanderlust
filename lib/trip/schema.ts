@@ -38,7 +38,7 @@ export const phase1DestinationSchema = z.object({
 });
 
 export const phase1ResultSchema = z.object({
-  selectedDestinations: z.array(phase1DestinationSchema).min(1).max(5),
+  selectedDestinations: z.array(phase1DestinationSchema).min(3).max(3),
 });
 
 export type Phase1Destination = z.infer<typeof phase1DestinationSchema>;
@@ -134,6 +134,17 @@ export const destinationSchema = z.object({
     activities: z.array(z.string()),
   }),
 
+  /** Theme colors for this destination (hex), applied in the UI */
+  colorPalette: z
+    .object({
+      primary: z.string(),
+      secondary: z.string(),
+      accent: z.string(),
+      background: z.string(),
+      text: z.string(),
+    })
+    .optional(),
+
   // Image generation
   imagePrompt: z.string(),
   imageUrl: z.string().nullable(),
@@ -142,7 +153,7 @@ export const destinationSchema = z.object({
 export type Destination = z.infer<typeof destinationSchema>;
 
 export const tripResultSchema = z.object({
-  destinations: z.array(destinationSchema).min(1).max(5),
+  destinations: z.array(destinationSchema).min(1).max(3),
 });
 
 export type TripResult = z.infer<typeof tripResultSchema>;
