@@ -148,11 +148,31 @@ export const destinationSchema = z.object({
   /** Theme colors for this destination (hex), applied in the UI */
   colorPalette: z
     .object({
-      primary: z.string(),
-      secondary: z.string(),
-      accent: z.string(),
-      background: z.string(),
-      text: z.string(),
+      primary: z
+        .string()
+        .describe(
+          "Main destination identity color (hex #RRGGBB). Structural UI tone—architecture, skyline, or dominant local material—not generic orange.",
+        ),
+      secondary: z
+        .string()
+        .describe(
+          "Supporting color (hex) clearly distinct from primary—sky, sea, foliage, secondary building tone, or regional secondary hue.",
+        ),
+      accent: z
+        .string()
+        .describe(
+          "Highlight color (hex) for badges, prices, small emphasis—punchy and place-specific; must differ from primary, secondary, background, and text.",
+        ),
+      background: z
+        .string()
+        .describe(
+          "Dominant page background (hex) for this destination only. Avoid default cream/ivory unless the place is truly defined by pale stone or sand; prefer place-specific dark, earthy, coastal, or urban hues.",
+        ),
+      text: z
+        .string()
+        .describe(
+          "Primary readable text color (hex) with strong contrast against background—dark on light backgrounds, light on dark backgrounds; never same or near-duplicate of background.",
+        ),
     })
     .nullable(),
 

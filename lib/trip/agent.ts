@@ -506,7 +506,11 @@ export async function* generateCollectionImagesStream(
     }),
   );
 
-  for (const outcome of imageResults) {
+  for (let i = 0; i < imageResults.length; i++) {
+    const outcome = imageResults[i];
+    const slot = pending[i];
+    if (!slot) continue;
+
     if (outcome.status === "fulfilled") {
       const { index, imageUrl } = outcome.value;
       yield {
@@ -519,6 +523,7 @@ export async function* generateCollectionImagesStream(
     yield {
       type: "error",
       data: {
+        index: slot.index,
         message:
           outcome.reason instanceof Error
             ? outcome.reason.message

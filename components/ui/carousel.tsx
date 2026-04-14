@@ -2,11 +2,15 @@
 import { IconArrowNarrowRight } from "@tabler/icons-react";
 import { useState, useRef, useId, useEffect, useCallback } from "react";
 
+type PosterPlaceholderPhase = "generating" | "failed" | "no_image";
+
 interface SlideData {
   title: string;
   subtitle?: string;
   button: string;
   src: string;
+  /** When src is empty, controls spinner vs static fallback */
+  posterPhase?: PosterPlaceholderPhase;
   loadingLabel?: string;
   onButtonClick?: () => void;
 }
@@ -136,10 +140,21 @@ export default function Carousel({ slides }: { slides: SlideData[] }) {
                 {!slide.src && (
                   <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#E07A3A]/20 to-[#D4682B]/10">
                     <div className="text-center px-6">
-                      <div className="w-10 h-10 rounded-full border-2 border-white/20 border-t-white animate-spin mx-auto" />
-                      <p className="mt-4 font-sans text-sm text-white/80">
-                        {slide.loadingLabel ?? `Generating poster for ${slide.title}...`}
-                      </p>
+                      {(slide.posterPhase ?? "generating") === "generating" ? (
+                        <>
+                          <div className="w-10 h-10 rounded-full border-2 border-white/20 border-t-white animate-spin mx-auto" />
+                          <p className="mt-4 font-sans text-sm text-white/80">
+                            {slide.loadingLabel ??
+                              `Generating poster for ${slide.title}...`}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="font-sans text-sm text-white/85 max-w-[14rem] mx-auto leading-relaxed">
+                          {slide.posterPhase === "failed"
+                            ? "Poster could not be generated. Try Retry posters or refresh the page."
+                            : "Poster not available for this destination."}
+                        </p>
+                      )}
                     </div>
                   </div>
                 )}
