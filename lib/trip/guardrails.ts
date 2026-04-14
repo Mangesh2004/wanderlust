@@ -14,7 +14,7 @@ Otherwise isValid is true. Keep reason short.`,
     isValid: z.boolean(),
     reason: z.string(),
   }),
-  model: process.env.OPENAI_TRIP_MODEL_FAST ?? "gpt-4o-mini",
+  model: process.env.OPENAI_TRIP_MODEL_FAST ?? "gpt-5.4-mini",
 });
 
 export const tripInputGuardrail: InputGuardrail = {

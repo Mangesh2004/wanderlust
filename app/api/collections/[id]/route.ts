@@ -1,5 +1,6 @@
 import { createSupabaseServer } from "@/lib/supabase/server";
 import prisma from "@/lib/db";
+import { revalidateTag } from "next/cache";
 
 export async function GET(
   _request: Request,
@@ -65,6 +66,8 @@ export async function DELETE(
     }
 
     await prisma.collection.delete({ where: { id } });
+    revalidateTag("collections", "max");
+    revalidateTag(`collections-${user.id}`, "max");
 
     return Response.json({ success: true });
   } catch (error) {

@@ -2,6 +2,7 @@ import { createSupabaseServer } from "@/lib/supabase/server";
 import { ensureProfile } from "@/lib/supabase/ensure-profile";
 import { uploadBase64Image } from "@/lib/supabase/upload-image";
 import prisma from "@/lib/db";
+import { revalidateTag } from "next/cache";
 
 export async function POST(request: Request) {
   const supabase = await createSupabaseServer();
@@ -68,6 +69,9 @@ export async function POST(request: Request) {
       },
       include: { destinations: true },
     });
+
+    revalidateTag("collections", "max");
+    revalidateTag(`collections-${user.id}`, "max");
 
     return Response.json(collection, { status: 201 });
   } catch (error) {

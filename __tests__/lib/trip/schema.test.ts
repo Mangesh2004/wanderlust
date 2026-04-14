@@ -63,6 +63,7 @@ function buildDestination(overrides: Partial<Record<string, unknown>> = {}) {
   return {
     name: "Test Place",
     country: "Testland",
+    state: "Test State",
     coordinates: { lat: 1, lon: 2 },
     tagline: "A tagline",
     description: "A description.",
@@ -126,7 +127,50 @@ describe("destinationSchema", () => {
     const d = buildDestination();
     const { colorPalette, ...rest } = d;
     expect(colorPalette).toBeDefined();
-    expect(() => destinationSchema.parse(rest)).not.toThrow();
+    expect(() => destinationSchema.parse({ ...rest, colorPalette: null })).not.toThrow();
+  });
+
+  it("defaults missing itinerary place icon to pin emoji", () => {
+    const d = buildDestination({
+      itinerary: [
+        {
+          day: 1,
+          title: "Day one",
+          places: [
+            {
+              name: "Cafe",
+              description: "Coffee",
+              duration: "1h",
+              cost: "$5",
+            },
+          ],
+        },
+      ],
+    });
+    const parsed = destinationSchema.parse(d);
+    expect(parsed.itinerary[0].places[0].icon).toBe("\u{1F4CD}");
+  });
+
+  it("normalizes invalid weather icons", () => {
+    const d = buildDestination({
+      weather: {
+        summary: "Cloudy",
+        forecast: [
+          {
+            ...minimalForecastDay,
+            icon: "\uFE0F",
+          },
+        ],
+      },
+    });
+    const parsed = destinationSchema.parse(d);
+    expect(parsed.weather.forecast[0].icon).toBe("🌤️");
+  });
+
+  it("accepts nullable state", () => {
+    const d = buildDestination({ state: null });
+    const parsed = destinationSchema.parse(d);
+    expect(parsed.state).toBeNull();
   });
 });
 

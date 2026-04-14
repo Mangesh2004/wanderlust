@@ -2,9 +2,65 @@ import "server-only";
 import { tool } from "@openai/agents";
 import { z } from "zod";
 import { geocodeLocation } from "../ai/tools/geocoder";
-import { getWeatherForecast } from "../ai/tools/weather";
+import { getWeatherForecast, type WeatherResult } from "../ai/tools/weather";
 import { convertCurrency } from "../ai/tools/currency";
-import { generateTripImage } from "./tools/image-gen";
+
+/** Per agent `run()`: keep weather deterministic by replaying the first result for a location. */
+const weatherResultsByLocation = new Map<string, WeatherResult>();
+const weatherResultsByRequest = new Map<string, WeatherResult>();
+
+export function resetWeatherToolCallBudget(): void {
+  weatherResultsByLocation.clear();
+  weatherResultsByRequest.clear();
+}
+
+function weatherKey(lat: number, lon: number): string {
+  return `${lat.toFixed(4)},${lon.toFixed(4)}`;
+}
+
+function weatherRequestKey(
+  lat: number,
+  lon: number,
+  days: number,
+  startDate: string,
+): string {
+  return `${weatherKey(lat, lon)}|${Math.ceil(days)}|${startDate}`;
+}
+
+function cloneWeatherResult(result: WeatherResult, cached: boolean): WeatherResult {
+  return {
+    ...result,
+    cached,
+    forecast: result.forecast.map((day) => ({ ...day })),
+  };
+}
+
+export async function executeWeatherForecast(
+  lat: number,
+  lon: number,
+  days: number,
+  startDate: string,
+): Promise<WeatherResult> {
+  const requestKey = weatherRequestKey(lat, lon, days, startDate);
+  const cachedRequest = weatherResultsByRequest.get(requestKey);
+  if (cachedRequest) {
+    return cloneWeatherResult(cachedRequest, true);
+  }
+
+  const locationKey = weatherKey(lat, lon);
+  const cachedLocation = weatherResultsByLocation.get(locationKey);
+  if (cachedLocation) {
+    const replay = cloneWeatherResult(cachedLocation, true);
+    weatherResultsByRequest.set(requestKey, replay);
+    return replay;
+  }
+
+  const result = await getWeatherForecast(lat, lon, days, startDate);
+  const canonical = cloneWeatherResult(result, false);
+  weatherResultsByLocation.set(locationKey, canonical);
+  weatherResultsByRequest.set(requestKey, canonical);
+  return cloneWeatherResult(canonical, false);
+}
 
 export const geocodeTool = tool({
   name: "geocode_location",
@@ -21,7 +77,8 @@ export const geocodeTool = tool({
 export const weatherTool = tool({
   name: "get_weather_forecast",
   description:
-    "Get weather forecast for specific dates at coordinates. Returns { forecast: [...] }.",
+    "Get weather from **Open-Meteo** daily forecast data. Returns { forecast, requestedDays, returnedDays, isPartial, final }. " +
+    "Open-Meteo may return only the next 1-2 available days near the forecast boundary; treat that as the final answer and do not retry for the same destination.",
   parameters: z.object({
     lat: z.number(),
     lon: z.number(),
@@ -29,7 +86,7 @@ export const weatherTool = tool({
     start_date: z.string().describe("YYYY-MM-DD trip start date"),
   }),
   async execute({ lat, lon, days, start_date }) {
-    return await getWeatherForecast(lat, lon, days, start_date);
+    return await executeWeatherForecast(lat, lon, days, start_date);
   },
 });
 
@@ -43,24 +100,5 @@ export const currencyTool = tool({
   }),
   async execute({ from, to }) {
     return await convertCurrency({ from, to });
-  },
-});
-
-export const imageGenTool = tool({
-  name: "generate_travel_image",
-  description:
-    "Generate a photorealistic travel poster image using Gemini (Nano Banana). " +
-    "Pass a detailed image prompt (30–40 words). Returns a base64 data URL or an error message.",
-  parameters: z.object({
-    prompt: z
-      .string()
-      .describe(
-        "Image prompt: cinematic landscape photograph, photorealistic, no illustration.",
-      ),
-  }),
-  timeoutMs: 60_000,
-  async execute({ prompt }) {
-    const result = await generateTripImage(prompt);
-    return result ?? "Image generation failed";
   },
 });

@@ -7,6 +7,7 @@ interface SlideData {
   subtitle?: string;
   button: string;
   src: string;
+  loadingLabel?: string;
   onButtonClick?: () => void;
 }
 
@@ -131,6 +132,16 @@ export default function Carousel({ slides }: { slides: SlideData[] }) {
                     loading="eager"
                     decoding="sync"
                   />
+                )}
+                {!slide.src && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#E07A3A]/20 to-[#D4682B]/10">
+                    <div className="text-center px-6">
+                      <div className="w-10 h-10 rounded-full border-2 border-white/20 border-t-white animate-spin mx-auto" />
+                      <p className="mt-4 font-sans text-sm text-white/80">
+                        {slide.loadingLabel ?? `Generating poster for ${slide.title}...`}
+                      </p>
+                    </div>
+                  </div>
                 )}
                 {diff === 0 && (
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />

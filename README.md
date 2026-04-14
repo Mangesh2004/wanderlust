@@ -16,19 +16,22 @@ flowchart LR
   subgraph agents [Agents SDK]
     A[Destination Selector]
     B[Destination Researcher]
-    C[Image Generator]
+  end
+  subgraph images [Server pipeline]
+    I[Gemini image-gen]
+    S[Supabase Storage]
   end
   A -->|3 x Phase1 dest| B
-  B -->|structured Destination| C
-  C -->|generate_travel_image tool| G[Gemini]
+  B -->|structured Destination| I
+  I -->|public URL| S
   B -->|webSearchTool| W[OpenAI hosted search]
 ```
 
-1. **Destination Selector** (`gpt-4o-mini` by default): `geocode_location`, `get_weather_forecast`, structured output for exactly three candidates. **Input guardrail** blocks abusive or nonsensical requests.
-2. **Destination Researcher** (`gpt-4o`): `web_search` (hosted), `convert_currency`, structured `Destination` (including optional `colorPalette` for theming).
-3. **Image Generator** (`gpt-4o-mini`): calls `generate_travel_image` → existing `lib/trip/tools/image-gen.ts` (**Gemini** `gemini-3.1-flash-image-preview`).
+1. **Destination Selector** (`gpt-5.4-mini` by default): `geocode_location`, `get_weather_forecast`, structured output for exactly three candidates. **Input guardrail** blocks abusive or nonsensical requests.
+2. **Destination Researcher** (`gpt-4o`): `web_search` (hosted), `convert_currency`, structured `Destination` (including nullable `colorPalette` for theming).
+3. **Posters**: `lib/trip/tools/image-gen.ts` calls **Gemini** (`gemini-3.1-flash-image-preview`), then uploads to **Supabase Storage** (`trip-images`) so the app streams and stores **HTTPS URLs**, not multi‑MB base64.
 
-Override models with `OPENAI_TRIP_MODEL_FAST` and `OPENAI_TRIP_MODEL` if needed.
+Override models with `OPENAI_TRIP_MODEL_FAST` and `OPENAI_TRIP_MODEL` if needed. The Agents SDK defaults to **`maxTurns: 10`** per run; this app sets **40** by default and caps at **200** — override with **`OPENAI_TRIP_MAX_TURNS`** if you still hit “Max turns exceeded” ([run options](https://openai.github.io/openai-agents-js/guides/running-agents/#run-arguments)).
 
 ## Setup
 
@@ -47,6 +50,8 @@ Override models with `OPENAI_TRIP_MODEL_FAST` and `OPENAI_TRIP_MODEL` if needed.
    | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Auth + Storage |
    | `DATABASE_URL` | Prisma/PostgreSQL connection string |
    | `DIRECT_URL` | Prisma migrate datasource (often same as `DATABASE_URL`) |
+   | `ALLOW_TRIP_DEBUG` | Set `true` to enable `/trip/debug` and `POST /api/trip/debug` (auth required; off by default) |
+   | `OPENAI_TRIP_MAX_TURNS` | Optional. Per-agent run turn limit (default **40**, min 10, max **200**). Raises SDK default of 10. |
 
 3. **Database**
 
@@ -66,6 +71,20 @@ Override models with `OPENAI_TRIP_MODEL_FAST` and `OPENAI_TRIP_MODEL` if needed.
 
    ```bash
    pnpm test
+   ```
+
+   Live Open-Meteo HTTP tests are **opt-in** (so CI does not depend on live network availability):
+
+   ```bash
+   RUN_WEATHER_LIVE=1 pnpm test
+   ```
+
+   See [`__tests__/lib/ai/tools/weather.integration.test.ts`](__tests__/lib/ai/tools/weather.integration.test.ts). Default `pnpm test` still runs parser checks without calling the API.
+
+   Optional one-off check (same as integration tests, but prints JSON):
+
+   ```bash
+   pnpm weather:smoke
    ```
 
 ## Tech stack

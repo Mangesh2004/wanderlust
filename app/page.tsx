@@ -58,7 +58,6 @@ export default function Home() {
         const decoder = new TextDecoder();
         let buffer = "";
         const collectedDests: Record<number, Destination> = {};
-        const collectedImages: Record<number, string> = {};
 
         while (true) {
           const { done, value } = await reader.read();
@@ -104,9 +103,6 @@ export default function Home() {
                   collectedDests[event.data.index] = event.data.destination;
                   break;
                 case "image_complete":
-                  if (event.data.imageUrl) {
-                    collectedImages[event.data.index] = event.data.imageUrl;
-                  }
                   break;
                 case "result":
                   if (event.data.success && event.data.result?.destinations) {
@@ -146,7 +142,6 @@ export default function Home() {
           const payload = {
             ...input,
             destinations: destsArray,
-            imageUrls: collectedImages,
           };
           let saveRes: Response | null = null;
           let lastSaveError = "";

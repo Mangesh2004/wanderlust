@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import type { Destination } from "@/lib/trip/schema";
 import { TripCarousel } from "@/app/components/trip-carousel";
@@ -27,6 +27,9 @@ export function CollectionView({ collectionId }: { collectionId: string }) {
   const [collection, setCollection] = useState<Collection | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [detailIndex, setDetailIndex] = useState<number | null>(null);
+  const [imageStatus, setImageStatus] = useState<string>("");
+  const [generatingImages, setGeneratingImages] = useState<Record<number, string>>({});
+  const imageStreamStartedRef = useRef(false);
 
   useEffect(() => {
     fetch(`/api/collections/${collectionId}`)
@@ -34,9 +37,110 @@ export function CollectionView({ collectionId }: { collectionId: string }) {
         if (!res.ok) throw new Error("Not found");
         return res.json();
       })
-      .then(setCollection)
+      .then((data: Collection) => {
+        setCollection(data);
+        setGeneratingImages(
+          Object.fromEntries(
+            data.destinations
+              .filter((dest) => !dest.imageUrl)
+              .map((dest) => [
+                dest.index,
+                (dest.data as Destination).name,
+              ]),
+          ),
+        );
+      })
       .catch((err) => setError(err.message));
   }, [collectionId]);
+
+  useEffect(() => {
+    if (!collection || imageStreamStartedRef.current) return;
+    if (collection.destinations.every((dest) => dest.imageUrl)) return;
+
+    imageStreamStartedRef.current = true;
+    let cancelled = false;
+
+    const startImageStream = async () => {
+      try {
+        const res = await fetch(`/api/collections/${collectionId}/images`, {
+          method: "POST",
+        });
+        if (!res.ok) {
+          throw new Error("Poster generation failed");
+        }
+
+        const reader = res.body?.getReader();
+        if (!reader) throw new Error("No image response stream");
+
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (!cancelled) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const chunks = buffer.split("\n\n");
+          buffer = chunks.pop() || "";
+
+          for (const chunk of chunks) {
+            const dataLine = chunk.replace(/^data: /, "").trim();
+            if (!dataLine) continue;
+
+            const event = JSON.parse(dataLine) as {
+              type: string;
+              data: Record<string, unknown>;
+            };
+
+            if (event.type === "status") {
+              setImageStatus(String(event.data.message ?? ""));
+            }
+
+            if (
+              event.type === "image_complete" &&
+              typeof event.data.index === "number"
+            ) {
+              const imageUrl =
+                typeof event.data.imageUrl === "string" && event.data.imageUrl
+                  ? event.data.imageUrl
+                  : null;
+
+              setCollection((prev) => {
+                if (!prev) return prev;
+                return {
+                  ...prev,
+                  destinations: prev.destinations.map((dest) =>
+                    dest.index === event.data.index
+                      ? { ...dest, imageUrl }
+                      : dest,
+                  ),
+                };
+              });
+              setGeneratingImages((prev) => {
+                const next = { ...prev };
+                delete next[event.data.index as number];
+                return next;
+              });
+            }
+
+            if (event.type === "done") {
+              setImageStatus("");
+            }
+          }
+        }
+      } catch (err) {
+        setImageStatus(
+          err instanceof Error ? err.message : "Poster generation failed",
+        );
+      }
+    };
+
+    void startImageStream();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [collection, collectionId]);
 
   if (error) {
     return (
@@ -72,6 +176,7 @@ export function CollectionView({ collectionId }: { collectionId: string }) {
       <TripDetail
         destination={destinations[detailIndex]}
         imageUrl={imageUrls[detailIndex]}
+        isImageGenerating={Boolean(generatingImages[detailIndex])}
         onBack={() => setDetailIndex(null)}
       />
     );
@@ -79,6 +184,12 @@ export function CollectionView({ collectionId }: { collectionId: string }) {
 
   return (
     <div className="relative min-h-screen bg-page-bg">
+      {imageStatus ? (
+        <div className="absolute top-20 right-4 sm:right-8 z-20 rounded-full bg-[var(--glass-bg)] backdrop-blur-md border border-[var(--glass-border)] px-4 py-2 font-sans text-xs text-text-secondary">
+          {imageStatus}
+        </div>
+      ) : null}
+
       {/* Back to collections */}
       <div className="absolute top-20 left-4 sm:left-8 z-20">
         <Link
@@ -95,6 +206,7 @@ export function CollectionView({ collectionId }: { collectionId: string }) {
       <TripCarousel
         destinations={destinations}
         imageUrls={imageUrls}
+        generatingImages={generatingImages}
         onExplore={(i) => setDetailIndex(i)}
       />
     </div>

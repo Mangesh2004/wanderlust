@@ -1,17 +1,11 @@
 import "server-only";
 import { Agent, webSearchTool } from "@openai/agents";
-import { z } from "zod";
-import {
-  geocodeTool,
-  weatherTool,
-  currencyTool,
-  imageGenTool,
-} from "./sdk-tools";
+import { geocodeTool, weatherTool, currencyTool } from "./sdk-tools";
 import { phase1ResultSchema, destinationSchema } from "./schema";
 import { tripInputGuardrail } from "./guardrails";
 
-const fastModel = process.env.OPENAI_TRIP_MODEL_FAST ?? "gpt-4o-mini";
-const researchModel = process.env.OPENAI_TRIP_MODEL ?? "gpt-4o";
+const fastModel = process.env.OPENAI_TRIP_MODEL_FAST ?? "gpt-5.4-mini";
+const researchModel = process.env.OPENAI_TRIP_MODEL ?? "gpt-5.4-mini";
 
 export const destinationSelectorAgent = new Agent({
   name: "Destination Selector",
@@ -19,15 +13,17 @@ export const destinationSelectorAgent = new Agent({
 preferences, and constraints, select the 3 best matching destinations worldwide.
 
 PROCESS:
-1. Consider 5+ candidates matching the vibe
+1. Consider 3-4 strong candidates matching the vibe
 2. Geocode each candidate with geocode_location
-3. Get weather with get_weather_forecast (pass start_date and days from the user message)
+3. Weather (CRITICAL): For each fixed (lat, lon), call get_weather_forecast once. Open-Meteo may return only the next 1-2 available days even when more were requested. Treat that as the FINAL answer for that destination. Never call the same coordinates again to try to get more days. If the tool errors or returns an empty forecast, stop and keep weather honest: set a brief summary like "Forecast unavailable right now 🌤️" and leave forecast as [].
 4. Validate vibe/weather match (cold/snow vibe → cool temps; beach/warm → warm temps)
 5. Produce final structured output with exactly 3 destinations
 
 RULES:
 - At least 2 destinations must be in different countries
-- For weather: add a short summary with emoji; each forecast day needs icon as a weather emoji
+- Never invent weather values that were not returned by the tool
+- If the tool returns fewer days than requested, accept the shorter forecast and do not retry
+- For weather: add a short summary with emoji; only include forecast days actually returned by the tool, and each returned day needs icon as a weather emoji
 - Use REAL coordinates from geocoding, not guesses`,
   model: fastModel,
   tools: [geocodeTool, weatherTool],
@@ -52,25 +48,12 @@ BUDGET:
 
 OUTPUT:
 - Fill EVERY field in the structured schema including colorPalette (hex colors that match the destination mood)
-- imagePrompt: 30–40 words, photorealistic, no poster/illustration wording
-- imageUrl: null (images are generated separately)`,
+- Preserve the incoming weather object faithfully. If its forecast is empty, keep it empty and do not invent weather rows.
+- itinerary.places: each place MUST include icon (one emoji); never omit it
+- imagePrompt: 35–50 words, photorealistic destination-only travel scene focused on scenery, architecture, streets, landscape, and atmosphere. Do not include people, faces, crowds, text, logos, poster design, illustration, or painting.
+- imageUrl: null (images are generated separately)
+- If state/region is unknown, use null`,
   model: researchModel,
-  tools: [webSearchTool({ searchContextSize: "medium" }), currencyTool],
+  tools: [webSearchTool({ searchContextSize: "low" }), currencyTool],
   outputType: destinationSchema,
-});
-
-export const imageGenOutputSchema = z.object({
-  imageDataUrl: z.string().nullable().describe("Base64 data URL from the tool, or null"),
-});
-
-export const imageGeneratorAgent = new Agent({
-  name: "Image Generator",
-  instructions: `You create travel poster images. You MUST call generate_travel_image once
-with the prompt given in the user message (after any light edits for clarity).
-
-Then respond with structured output: imageDataUrl must be the exact string returned by the tool
-(if it starts with data: it is valid). If the tool returns an error message, set imageDataUrl to null.`,
-  model: fastModel,
-  tools: [imageGenTool],
-  outputType: imageGenOutputSchema,
 });

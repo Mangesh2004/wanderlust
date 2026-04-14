@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+function normalizeEmojiIcon(value: unknown, fallback: string): string {
+  if (typeof value !== "string") return fallback;
+  const trimmed = value.trim();
+  if (!trimmed || trimmed === "\uFE0F") return fallback;
+  return trimmed;
+}
+
 // --- User Input ---
 export const tripInputSchema = z.object({
   vibe: z.string().min(1, "Describe your travel vibe"),
@@ -32,7 +39,7 @@ export const phase1DestinationSchema = z.object({
       high: z.number(),
       low: z.number(),
       condition: z.string(),
-      icon: z.string(),
+      icon: z.preprocess((val) => normalizeEmojiIcon(val, "🌤️"), z.string()),
     })),
   }),
 });
@@ -47,7 +54,7 @@ export type Phase1Destination = z.infer<typeof phase1DestinationSchema>;
 export const destinationSchema = z.object({
   name: z.string(),
   country: z.string(),
-  state: z.string().optional(),
+  state: z.string().nullable(),
   coordinates: z.object({ lat: z.number(), lon: z.number() }),
   tagline: z.string(),
   description: z.string(),
@@ -65,7 +72,7 @@ export const destinationSchema = z.object({
       high: z.number(),
       low: z.number(),
       condition: z.string(),
-      icon: z.string(),
+      icon: z.preprocess((val) => normalizeEmojiIcon(val, "🌤️"), z.string()),
     })),
   }),
 
@@ -118,7 +125,11 @@ export const destinationSchema = z.object({
       description: z.string(),
       duration: z.string(),
       cost: z.string(),
-      icon: z.string(),
+      // Models sometimes omit this; default keeps validation from failing the whole destination.
+      icon: z.preprocess(
+        (val) => normalizeEmojiIcon(val, "\u{1F4CD}"),
+        z.string(),
+      ),
     })),
   })),
 
@@ -143,7 +154,7 @@ export const destinationSchema = z.object({
       background: z.string(),
       text: z.string(),
     })
-    .optional(),
+    .nullable(),
 
   // Image generation
   imagePrompt: z.string(),

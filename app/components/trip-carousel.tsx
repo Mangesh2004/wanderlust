@@ -23,6 +23,9 @@ export function TripCarousel({
     subtitle: dest.country,
     button: "Explore →",
     src: imageUrls[i] || "",
+    loadingLabel: generatingImages[i]
+      ? `Generating poster for ${generatingImages[i]}...`
+      : undefined,
     onButtonClick: () => onExplore(i),
   }));
 
